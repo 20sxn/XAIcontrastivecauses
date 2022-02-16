@@ -63,8 +63,28 @@ def diff_cond(D1,D2):
             res[k] = (v,v2)
     return res
 
+def test_CC1(X,fact,M,u):
+    """
+    dict * dict * causal model * dict
+    Return True if CC1 is respected, False otherwise
+    """
+    f = fact.items()
+    for x in X.items():
+        if x not in f:
+            return False
+    return True
+
+def test_CC2(foil,M,u):
+    pass
+
+def test_CC3():
+    pass
+
 def test_CC4(x,y):
     return(len(diff_cond(x,y))==0)
+
+""" def test_CC5():
+    pass """
 
 def test_counterfactual_cause(x, y, fact, foil, M,u):
     a = test_CC1(x,fact,M, u)
