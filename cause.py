@@ -6,7 +6,7 @@ from numpy import character
 catalog = dict()    #weight length width height price wheels
 catalog["Twingo"] = (1000, 3.6, 1.6, 1.5, 15000,4)
 
-def classifier_vehicule(u):
+def classifier_vehicule(u): #decomposer en une  fonction extractrice de features + fonctions de calculs de variable endogene + vrai classifier.
     charac = catalog[u]
     weight = charac[0]
     length = charac[1]
@@ -83,13 +83,21 @@ def test_CC3():
 def test_CC4(x,y):
     return(len(diff_cond(x,y))==0)
 
-""" def test_CC5():
-    pass """
+
+
+def test_CC5(X,fact,foil):
+    diff1 = set(fact.items()).difference(set(foil.items()))
+    diff2 = set(foil.items()).difference(set(fact.items()))
+    diff = list(diff1.union(diff2))
+
+    if (len(set(X) & set(diff))==len(X)):
+        return True
+    return False
 
 def test_counterfactual_cause(x, y, fact, foil, M,u):
     a = test_CC1(x,fact,M, u)
     a = a and test_CC2(foil,M, u)
     a = a and test_CC3(y,foil,M,u)
     a = a and test_CC4(x,y)
-    #a = a and test_CC5()
+    a = a and test_CC5()
     return a
