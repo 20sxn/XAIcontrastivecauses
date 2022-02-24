@@ -1,4 +1,5 @@
-#with dictionnaries
+#### Draft
+
 from this import d
 
 from numpy import character
@@ -65,8 +66,8 @@ def diff_cond(D1,D2):
 
 def test_CC1(X,fact,M,u):
     """
-    dict * dict * causal model * dict
-    Return True if CC1 is respected, False otherwise
+    dict * dict * causal model * dict -> bool
+    Return True if CC1 is respected (see p.10), False otherwise
     """
     f = fact.items()
     for x in X.items():
@@ -86,6 +87,10 @@ def test_CC4(x,y):
 
 
 def test_CC5(X,fact,foil):
+    """
+    dict**3 -> bool
+    Return True if CC5 is respected, False otherwise
+    """
     diff1 = set(fact.items()).difference(set(foil.items()))
     diff2 = set(foil.items()).difference(set(fact.items()))
     diff = list(diff1.union(diff2))
@@ -95,6 +100,11 @@ def test_CC5(X,fact,foil):
     return False
 
 def test_counterfactual_cause(x, y, fact, foil, M,u):
+    """
+    dict**4 * causal model * dict -> bool
+    Return True if <x,y> is a contrastive counterfactual actual cause
+    (= counterfactual cause) of <fact,foil>, False otherwise
+    """
     a = test_CC1(x,fact,M, u)
     a = a and test_CC2(foil,M, u)
     a = a and test_CC3(y,foil,M,u)
