@@ -92,82 +92,126 @@ def check_not(psi,Mu):
 			return True
 	return False
 
-## PREDICATES TO PROVE X=x ACTUAL CAUSE OF phi IN (M,u)
+## PREDICATES TO PROVE X=x ACTUAL CAUSE OF phi IN (M,u) [see p.9-10]
 
 def test_AC1(x,fact,Mu):
+	"""
+	dict * dict * class Situation
+	return True iff AC1 is respected, False otherwise
+	"""
 	return check(x,Mu) and check(fact,Mu)
 
 
 def produit(liste):
+	"""
+	list -> float
+	return the product of all elements in liste
+	"""
 	produit = 1
 	for i in liste:
 		produit = produit * i
 	return produit
 
-def test_AC2(X,M,u):
+def test_AC2(X,fact,Mu):
+	"""
+	dict * dict * class Situation
+	return True iff AC2 is respected, False otherwise
+	"""
 	i = 0
-	b = False
-	W = (M.S.V-X) #partition de V en X et W
+	#b = False
+	W = (Mu.S.V-X) #partition de V en X et W
 	x_prim = [] #la liste de toutes les combinaisons possibles des valeurs de X
-	nb_possibilities=produit([len(r) for r in M.R.values()]) #nb de combinaisons possibles
+	nb_possibilities=produit([len(r) for r in Mu.U.values()]+[len(r) for r in Mu.V.values()]) #nb de combinaisons possibles
 	while(i<nb_possibilities):
 		tmp = []
 		for k,v in X:
 			new_val = v
 			while(new_val == v):
-				new_val= np.random.choice(M.S.R[k])
+				new_val= np.random.choice(Mu.M.V[k])
 			tmp.append((k,new_val))
 		if tmp not in x_prim:
 			x_prim.append(tmp)
 			i+=1
 	for x in x_prim:
-		if(check(x+W,M,u)):# si M,u |= [X <- x_prim et W <- w] Phi alors on renvoie false car il y a un autre ensemble de valeur != x qui satisfait Phi
-			b=True
-	return not(b)
+		newMu = "Mu avec les valeurs X=x' et W=w" # TODO
+		if(check_not(fact,newMu)):# si M,u |= [X <- x_prim et W <- w] Phi alors on renvoie false car il y a un autre ensemble de valeur != x qui satisfait Phi
+			return True
+	return False
 
 def subsets(liste):
+	"""
+	list -> list
+	return the list of all subsets of liste
+	"""
 	if len(liste)==0:
 		return [[]]
 	x = subsets(liste[1:])
 	return x + [[liste[0]] + y for y in x]
 
 def subsets_size(liste,n):
+	"""
+	list * int -> list(int)
+	return the list of elements of liste that have length < n
+	"""
 	return [l for l in subsets(liste) if len(l)<n]
 
 
 def test_AC3(X,fact,Mu):
+	"""
+	dict * dict * class Situation
+	return True iff AC1 is respected, False otherwise
+	"""
 	subsets_x = subsets_size(X,len(X)) #Tous les sous-ensembles possibles de X 
 	for sub in subsets_x:
 		if(test_AC1(sub,fact,Mu) and (test_AC2(sub,Mu))):
 			return False	
 	return True
 
-
+def test_actual_cause(x,fact,Mu):
+	return test_AC1(x,fact,Mu) and test_AC2(x,fact,Mu) and test_AC3(x,fact,Mu)
 
 ## PREDICATES TO PROVE <X=x,X=y> COUNTERFACTUAL CAUSE OF <fact,foil> IN (M,u) [see p.10]
 
-def test_CC1(X,fact):
+def is_subset(X,phi):
+	"""
+	dict * dict -> bool
+	return True iff x is a subset of phi
+	"""
+	f = phi.items()
+	for x in X.items():
+		if x not in f:
+			return False
+	return True
+
+def test_partial_cause(x,phi,Mu):
+	"""
+	return True iff x is a partial cause of phi in Mu=(M,u)
+	"""
+	return test_actual_cause(phi,Mu) and is_subset(x,phi)
+
+def test_CC1(X,fact,Mu):
     """
     dict * dict * situation -> bool
     Return True if CC1 is respected, False otherwise
     """
-    f = fact.items()
-    for x in X.items():
-        if x not in f:
-            return False
-    return True
+    return test_partial_cause(X,fact,Mu)
 
 
 def test_CC2(foil,Mu):
 	"""
-    dict * situation -> bool
-    Return True if CC2 is respected, False otherwise
-    """
+	dict * situation -> bool
+	Return True if CC2 is respected, False otherwise
+	"""
 	return check_not(foil,Mu)	
 
 
-def test_CC3():
-    pass
+def test_CC3(y,foil,Mu):
+	W = subsets((Mu.S.V-y)) #parties des valeurs possibles pour W
+	for w in W:
+		newMu = "Mu avec les valeurs W=w" #TODO
+		if test_partial_cause(y,foil,newMu):
+			return True
+	return False
 
 
 def diff_cond(D1,D2):
@@ -185,7 +229,11 @@ def diff_cond(D1,D2):
     return res
 
 def test_CC4(x,y):
-    return(len(diff_cond(x,y))==0)
+	"""
+	dict * dict -> bool
+	return True iff CC4 is respected, False otherwise
+	"""
+	return (len(diff_cond(x,y))==0)
 
 
 def test_CC5(X,fact,foil):
