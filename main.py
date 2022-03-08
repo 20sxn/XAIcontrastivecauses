@@ -5,7 +5,7 @@ import numpy as np
 class CausalGraph:
 	def __init__(self,P,C):
 		self.P = P #dictionnaire parents {'variable' : ([list of parent variables (string)],function)}
-		self.C = C #dictionnaire enfants {'variable' : [liste of children variables (string)]}
+		self.C = C #dictionnaire enfants {'variable' : [list of children variables (string)]}
 
 	def get_Parents(self,n):
 		if n in self.P.keys():
@@ -44,8 +44,8 @@ class Signature:
 		self.V = V  # dict exogenous variable -> list of possible values
         
 class Model(Signature):
-	def __init__(self,G):
-		Signature.__init__(self)
+	def __init__(self,U,V,G):
+		Signature.__init__(self,U,V)
 		self.G = G # class CausalGraph object
 
 class Situation:
@@ -53,6 +53,20 @@ class Situation:
 		self.M = M # class Model object
 		self.u = u # dict exgenous variable -> value
 		self.v = v # dict endogenous variable -> value
+
+	def val_Parents(self,X):
+		"""
+		variable -> dict(parent var : value)
+		"""
+		res = dict()
+		parents = self.M.G.get_Parents(X)
+		for k in parents:
+			if k in list(self.u.keys()):
+				res[k] = self.u[k]
+			elif k in list(self.v.keys()):
+				res[k] = self.v[k]
+		return res
+		
 	
 	#update functions
 
@@ -62,7 +76,7 @@ def value(X,Mu):
 	variable * Situation -> value
 	Calculer la valeur de la variable X en fonction des autres variables
     """
-	parents = Mu.M.G.get_Parents(X)   #dictionnaire des noeuds parent de X dans M.G
+	parents = Mu.val_Parents(X)   #dictionnaire noeuds parent de X dans M.G -> valeur
 	if len(parents) == 0:
         #cas de base = racine : retourner sa valeur
 		return Mu.u[X]

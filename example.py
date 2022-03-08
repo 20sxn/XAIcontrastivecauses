@@ -34,21 +34,21 @@ U = {'nb_places':[1,2,3,4,5,6,7], \
 
 # Endogenous variables
 V = {'prix_carburant':[1.50,1.6,0.72], \
-    'prix_plein':[72.00000000000001,76.5,81.0,85.4999999999999996,102.0,108.0,114.0,144.00000000000003,153.0,162.0,170.99999999999997,192.0,204.0,216.0,228.0,76.80000000000001,81.60000000000001,86.4,91.19999999999999,102.4,
-108.80000000000001,115.2,121.60000000000001,
-153.60000000000002,163.20000000000002,172.8,182.39999999999998,204.8,217.60000000000002,230.4,243.20000000000002,34.56,36.72,38.879999999999995,41.03999999999999,46.08,48.96,
-51.839999999999996,54.72,69.12,73.44,77.75999999999999,82.07999999999998,92.16,97.92,103.67999999999999,109.44], \
-    'prix_assurance':[1.1814744801512287,1.48720999405116,1.9290123456790123,2.601456815816858,3.698224852071006,5.668934240362812,9.765625,20.66115702479339,69.44444444444444,2500.0], \
-    'capacité_carburant':[48.00000000000001,51.0,54.0,56.99999999999999,64.0,68.0,72.0,76.0,96.00000000000001,102.0,108.0,113.99999999999999,128.0,136.0,144.0,152.0], \
+    'prix_plein':[72.0, 76.5, 81.0, 85.5, 102.0, 108.0, 114.0, 144.0, 153.0, 162.0, 171.0, 192.0, 204.0, 216.0, 228.0, 76.8, 81.6, 86.4, 91.2, 102.4,
+108.8, 115.2, 121.6, 153.6, 163.2, 172.8, 182.4, 204.8, 217.6, 230.4, 243.2, 34.56, 36.72, 38.88, 41.04, 46.08, 48.96,
+51.84, 54.72, 69.12, 73.44, 77.76, 82.08, 92.16, 97.92, 103.68, 109.44], \
+    'prix_assurance':[1.18, 1.49, 1.93, 2.60, 3.7, 5.67, 9.77, 20.66, 69.44, 2500.0], \
+    'capacité_carburant':[48, 51, 54, 57, 64, 68, 72, 76, 96, 102, 108, 114, 128, 136, 144, 152], \
     'output':['peu cher','cher','très cher','très très cher']}
-#parent node for each endogenous variable
+
+# Parent node for each endogenous variable
 P = {'prix_carburant':(['type_carburant'],compute_prix_Carburant), \
     'prix_plein':(['prix_carburant','capacite_carburant'],compute_prix_plein), \
     'prix_assurance':(['annee_prod'],compute_prix_assurance), \
     'capacité_carburant':(['longueur','hauteur'],compute_capacite_carburant), \
     'output':(['nb_places','nb_chevaux','prix_plein','annee_prod','prix_assurance'],compute_output)}
 
-C=  {'type_carburant':['prix_carburant'], \
+C =  {'type_carburant':['prix_carburant'], \
     'prix_carburant':['prix_plein'], \
     'annee_prod':['prix_assurance','output'], \
     'longueur':['capacité_carburant'], \
@@ -60,6 +60,10 @@ C=  {'type_carburant':['prix_carburant'], \
 
 # Construction of situation (M,u)
 Graph = CausalGraph(P,C)
-Mod = Model(Graph)
-Sit = Situation(Mod,U,V)
+Mod = Model(U,V,Graph)
+
+u = dict()
+v = dict()
+
+Sit = Situation(Mod,u,v)
 
