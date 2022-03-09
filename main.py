@@ -1,6 +1,7 @@
 ### Main things to deal with causes
 
 import numpy as np
+import copy
 
 class CausalGraph:
 	def __init__(self,P,C):
@@ -126,6 +127,25 @@ def produit(liste):
 		produit = produit * i
 	return produit
 
+def diff(d1,d2):
+    """
+	retourne le dictionnaire d1\(k,v) (k) in d2
+	"""
+    res = dict()
+    for k in d1:
+        if k not in d2:
+            res[k] = d1[k]
+    return res
+
+def dico2list(d):
+	"""
+	transforme un dictionnaire en liste (opération inverse : dict(l))
+	"""
+	l = []
+	for k,v in d.items():
+		l.append((k,v))
+	return l
+
 def test_AC2(X,fact,Mu):
 	"""
 	dict * dict * class Situation
@@ -133,23 +153,28 @@ def test_AC2(X,fact,Mu):
 	"""
 	i = 0
 	#b = False
-	W = (Mu.S.V-X) #partition de V en X et W
-	x_prim = [] #la liste de toutes les combinaisons possibles des valeurs de X
-	nb_possibilities=produit([len(r) for r in Mu.U.values()]+[len(r) for r in Mu.V.values()]) #nb de combinaisons possibles
-	while(i<nb_possibilities):
-		tmp = []
-		for k,v in X:
-			new_val = v
-			while(new_val == v):
-				new_val= np.random.choice(Mu.M.V[k])
-			tmp.append((k,new_val))
-		if tmp not in x_prim:
-			x_prim.append(tmp)
-			i+=1
-	for x in x_prim:
-		newMu = "Mu avec les valeurs X=x' et W=w" # TODO
-		if(check_not(fact,newMu)):# si M,u |= [X <- x_prim et W <- w] Phi alors on renvoie false car il y a un autre ensemble de valeur != x qui satisfait Phi
-			return True
+	W = diff(Mu.S.V,X) #(Mu.S.V-X) #partition de V en X et W
+	for sublW in subsets(dico2list(W)):
+		if len(sublW)>0:
+			subW = dict(sublW)
+			x_prim = [] #la liste de toutes les combinaisons possibles des valeurs de X
+			nb_possibilities=produit([len(r) for r in Mu.U.values()]+[len(r) for r in Mu.V.values()]) #nb de combinaisons possibles
+			while(i<nb_possibilities):
+				tmp = []
+				for k,v in X:
+					new_val = v
+					while(new_val == v):
+						new_val= np.random.choice(Mu.M.V[k])
+					tmp.append((k,new_val))
+				if tmp not in x_prim: #x_prim = already tested
+					x_prim.append(tmp)
+					i+=1
+					v = dict(tmp)
+					for w,val in subW:
+						v[w]=val
+					newMu = Situation(Mu.M,Mu.u,v)
+					if(check_not(fact,newMu)):# si M,u |= [X <- x_prim et W <- w] Phi alors on renvoie false car il y a un autre ensemble de valeur != x qui satisfait Phi
+						return True	
 	return False
 
 def subsets(liste):
@@ -220,11 +245,21 @@ def test_CC2(foil,Mu):
 
 
 def test_CC3(y,foil,Mu):
-	W = subsets((Mu.S.V-y)) #parties des valeurs possibles pour W
-	for w in W:
-		newMu = "Mu avec les valeurs W=w" #TODO
-		if test_partial_cause(y,foil,newMu):
-			return True
+	W = diff(Mu.S.V,y) #parties des valeurs possibles pour W
+	#W = subsets((Mu.S.V-y)) 
+	for sublW in subsets(dico2list(W)):
+		if len(sublW)>0:
+			subW = dict(sublW)
+			newMu = copy.deepcopy(Mu) #Mu avec valeurs de subW
+			for w in subW: 
+				if w in newMu.U:
+					newMu.U[w] = subW[w]
+				elif w in newMu.v:
+					newMu.v[w] = subW[w]
+				else: 
+					raise Exception("Custom : Mu not properly defined")
+			if test_partial_cause(y,foil,newMu):
+				return True
 	return False
 
 
@@ -275,3 +310,23 @@ def test_counterfactual_cause(x, y, fact, foil, Mu):
     a = a and test_CC4(x,y)
     a = a and test_CC5(x,fact,foil)
     return a
+
+
+def actual_cause_generator(fact,Mu):
+	"""
+	dict * situation -> dict
+	retourne une cause actuelle de fact dans la situation (M,u)
+	"""
+	xu = Mu.u
+	xv = Mu.v
+	to_test = list(sorted(subsets(dico2list(xu)+dico2list(xv)),key = len))[1:] 	#enumere toutes les combinaisons de variables a tester
+																				#on les tris par taille pour vérifier AC3 par construction
+	for lx in to_test:
+		if  test_AC1(dict(lx),fact,Mu) and test_AC2(dict(lx),fact,Mu): #AC3 vraie par construction
+			return dict(lx)
+	return dict() #s'il n'y a pas de cause actuelle
+
+def counterfactual_cause_generator(fact,foil,Mu):
+	acx = actual_cause_generator(fact,Mu)
+	allX = subsets(dico2list(acx))
+	pass
