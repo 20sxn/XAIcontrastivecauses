@@ -3,8 +3,11 @@
 from main import *
 
 # Functions to compute endogenous variables
-def compute_nb_legs(Sit):
-    U = Sit.u['U']
+def compute_nb_legs(parents):
+    """
+    On sait que nb_legs a pour ubique parent U
+    """
+    U = parents['U']
     if U == "Spider":
         return 8
     elif U == "Beetle":
@@ -16,8 +19,8 @@ def compute_nb_legs(Sit):
     else:
         return None
 
-def compute_stinger(Sit):
-    U = Sit.u['U']
+def compute_stinger(parents):
+    U = parents['U']
     if U == "Spider":
         return False
     elif U == "Beetle":
@@ -29,8 +32,8 @@ def compute_stinger(Sit):
     else:
         return None
 
-def compute_nb_eyes(Sit):
-    U = Sit.u['U']
+def compute_nb_eyes(parents):
+    U = parents['U']
     if U == "Spider":
         return 8
     elif U == "Beetle":
@@ -42,8 +45,8 @@ def compute_nb_eyes(Sit):
     else:
         return None
 
-def compute_compound_eyes(Sit):
-    U = Sit.u['U']
+def compute_compound_eyes(parents):
+    U = parents['U']
     if U == "Spider":
         return False
     elif U == "Beetle":
@@ -55,8 +58,8 @@ def compute_compound_eyes(Sit):
     else:
         return None
 
-def compute_wings(Sit):
-    U = Sit.u['U']
+def compute_wings(parents):
+    U = parents['U']
     if U == "Spider":
         return 0
     elif U == "Beetle":
@@ -68,8 +71,8 @@ def compute_wings(Sit):
     else:
         return None
 
-def compute_output(Sit):
-    (nb_legs,stinger,nb_eyes,compound_eyes,wings) = (Sit.v["nb_legs"],Sit.v["stinger"],Sit.v["nb_eyes"],Sit.v["compound_eyes"],Sit.v["wings"],)
+def compute_output(parents):
+    (nb_legs,stinger,nb_eyes,compound_eyes,wings) = (parents["nb_legs"],parents["stinger"],parents["nb_eyes"],parents["compound_eyes"],parents["wings"],)
     if (nb_legs,stinger,nb_eyes,compound_eyes,wings) == (8,False,8,False,0):
         return "Spider"
     elif (nb_legs,stinger,nb_eyes,compound_eyes,wings) == (6,False,2,True,2):
@@ -123,12 +126,12 @@ v = {'nb_legs' : 8, \
 Sit = Situation(Mod,u,v)
 
 # Test de value
-assert(value("wings",Sit)==0)
-assert(not(value("wings",Sit)==2))
+assert(Sit.value("wings")==0)
+assert(not(Sit.value("wings")==2))
 
 # Test de check
 phi = {"wings" : 0, "stinger" : False}
-assert(check(phi,Sit)==True)
+assert(Sit.check(phi)==True)
 
 phi = {"wings" : 0, "stinger" : True}
-assert(check(phi,Sit)==False)
+assert(Sit.check(phi)==False)
