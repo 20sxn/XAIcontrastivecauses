@@ -3,8 +3,8 @@
 from main import *
 
 # Functions to compute endogenous variables
-def compute_nb_legs(Sit):
-    U = Sit.u['U']
+def compute_nb_legs(param):
+    U = param['U']
     if U == "Spider":
         return 8
     elif U == "Beetle":
@@ -16,8 +16,8 @@ def compute_nb_legs(Sit):
     else:
         return None
 
-def compute_stinger(Sit):
-    U = Sit.u['U']
+def compute_stinger(param):
+    U = param['U']
     if U == "Spider":
         return False
     elif U == "Beetle":
@@ -29,8 +29,8 @@ def compute_stinger(Sit):
     else:
         return None
 
-def compute_nb_eyes(Sit):
-    U = Sit.u['U']
+def compute_nb_eyes(param):
+    U = param['U']
     if U == "Spider":
         return 8
     elif U == "Beetle":
@@ -42,8 +42,8 @@ def compute_nb_eyes(Sit):
     else:
         return None
 
-def compute_compound_eyes(Sit):
-    U = Sit.u['U']
+def compute_compound_eyes(param):
+    U = param['U']
     if U == "Spider":
         return False
     elif U == "Beetle":
@@ -55,8 +55,8 @@ def compute_compound_eyes(Sit):
     else:
         return None
 
-def compute_wings(Sit):
-    U = Sit.u['U']
+def compute_wings(param):
+    U = param['U']
     if U == "Spider":
         return 0
     elif U == "Beetle":
@@ -68,8 +68,8 @@ def compute_wings(Sit):
     else:
         return None
 
-def compute_output(Sit):
-    (nb_legs,stinger,nb_eyes,compound_eyes,wings) = (Sit.v["nb_legs"],Sit.v["stinger"],Sit.v["nb_eyes"],Sit.v["compound_eyes"],Sit.v["wings"],)
+def compute_output(param):
+    (nb_legs,stinger,nb_eyes,compound_eyes,wings) = (param["nb_legs"],param["stinger"],param["nb_eyes"],param["compound_eyes"],Sit.v["wings"],)
     if (nb_legs,stinger,nb_eyes,compound_eyes,wings) == (8,False,8,False,0):
         return "Spider"
     elif (nb_legs,stinger,nb_eyes,compound_eyes,wings) == (6,False,2,True,2):
@@ -98,9 +98,9 @@ P = {'nb_legs' : (['U'],compute_nb_legs), \
     'nb_eyes' : (['U'],compute_nb_eyes), \
     'compound_eyes' : (['U'],compute_compound_eyes), \
     'wings' : (['U'],compute_wings), \
-    'output' : (['nb_legs'],compute_output)}
+    'output' : (['nb_legs','stinger','nb_eyes','compound_eyes','wings'],compute_output)}
 
-C =  {'U' : ['nb_legs'], \
+C =  {'U' : ['nb_legs','stinger','nb_eyes','compound_eyes','wings'], \
     'nb_legs' : ['output'], \
     'stinger' : ['output'], \
     'nb_eyes' : ['output'], \
@@ -132,16 +132,16 @@ assert(value("output",Sit)=="Spider")
 
 # Test de check
 phi = {"wings" : 0, "stinger" : False}
-assert(check(phi,Sit)==True)
+assert(check(phi,Sit))
 
 phi = {"wings" : 0, "stinger" : True}
-assert(check(phi,Sit)==False)
+assert(not(check(phi,Sit)))
 
 phi = {"output" : "Spider"}
-assert(check(phi,Sit)==True)
+assert(check(phi,Sit))
 
 phi = {"output" : "Bee"}
-assert(check(phi,Sit)==False)
+assert(not(check(phi,Sit)))
 
 
 # Test de AC1
@@ -161,7 +161,7 @@ assert(test_AC1(x,fact,Sit))
 
 x = {"nb_legs" : 4}
 fact = {"output" : "Bee"}
-assert(test_AC1(x,fact,Sit)==False)
+assert(not(test_AC1(x,fact,Sit)))
 
 
 # Test de AC2

@@ -37,13 +37,13 @@ class CausalGraph:
 		for k in self.P.keys():
 			if k==n:
 				self.P[n][1] = f
-	
+
 
 class Signature:
 	def __init__(self,U,V):
 		self.U = U # dict exogenous variable -> list of possible values
 		self.V = V  # dict exogenous variable -> list of possible values
-        
+
 class Model(Signature):
 	def __init__(self,U,V,G):
 		Signature.__init__(self,U,V)
@@ -70,11 +70,11 @@ class Situation:
 			elif k in list(self.v.keys()):
 				res[k] = self.v[k]
 		return res
-		
-	
+
+
 	#update functions
 
-        
+
 def value(X,Mu):
 	"""
 	variable * Situation -> value
@@ -89,9 +89,9 @@ def value(X,Mu):
 		if v == None: # on ne connait pas la valeur
 			parents[k] = value(k,Mu)
 
-	lparents = Mu.M.G.get_Parents(X)
-	lvalue = [parents[k] for k in lparents]
-	return Mu.M.G.P[X][1](lvalue)
+	#lparents = Mu.M.G.get_Parents(X)
+	#lvalue = [parents[k] for k in lparents]
+	return Mu.M.G.P[X][1](parents)
 
 def check(phi,Mu):
 	"""
@@ -186,7 +186,7 @@ def test_AC2(X,fact,Mu):
 						v[w]=val
 					newMu = Situation(Mu.M,Mu.u,v)
 					if(check_not(fact,newMu)):# si M,u |= [X <- x_prim et W <- w] Phi alors on renvoie false car il y a un autre ensemble de valeur != x qui satisfait Phi
-						return True	
+						return True
 	return False
 
 def subsets(liste):
@@ -212,10 +212,10 @@ def test_AC3(X,fact,Mu):
 	dict * dict * class Situation
 	return True iff AC1 is respected, False otherwise
 	"""
-	subsets_x = subsets_size(X,len(X)) #Tous les sous-ensembles possibles de X 
+	subsets_x = subsets_size(X,len(X)) #Tous les sous-ensembles possibles de X
 	for sub in subsets_x:
 		if(test_AC1(sub,fact,Mu) and (test_AC2(sub,Mu))):
-			return False	
+			return False
 	return True
 
 def test_actual_cause(x,fact,Mu):
@@ -253,22 +253,22 @@ def test_CC2(foil,Mu):
 	dict * situation -> bool
 	Return True if CC2 is respected, False otherwise
 	"""
-	return check_not(foil,Mu)	
+	return check_not(foil,Mu)
 
 
 def test_CC3(y,foil,Mu):
 	W = diff(Mu.S.V,y) #parties des valeurs possibles pour W
-	#W = subsets((Mu.S.V-y)) 
+	#W = subsets((Mu.S.V-y))
 	for sublW in subsets(dico2list(W)):
 		if len(sublW)>0:
 			subW = dict(sublW)
 			newMu = copy.deepcopy(Mu) #Mu avec valeurs de subW
-			for w in subW: 
+			for w in subW:
 				if w in newMu.U:
 					newMu.U[w] = subW[w]
 				elif w in newMu.v:
 					newMu.v[w] = subW[w]
-				else: 
+				else:
 					raise Exception("Custom : Mu not properly defined")
 			if test_partial_cause(y,foil,newMu):
 				return True
