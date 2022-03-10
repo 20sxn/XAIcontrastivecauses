@@ -74,7 +74,7 @@ def compute_output(Sit):
         return "Spider"
     elif (nb_legs,stinger,nb_eyes,compound_eyes,wings) == (6,False,2,True,2):
         return "Beetle"
-    elif (nb_legs,stinger,nb_eyes,compound_eyes,wings) == (6,True,5,True,4):
+    elif (nb_legs,stinger,nb_eyes,compound_eyes,wings) == (6,False,5,True,4):
         return "Bee"
     elif (nb_legs,stinger,nb_eyes,compound_eyes,wings) == (6,False,5,True,2):
         return "Fly"
@@ -122,9 +122,13 @@ v = {'nb_legs' : 8, \
 
 Sit = Situation(Mod,u,v)
 
+
+
 # Test de value
 assert(value("wings",Sit)==0)
 assert(not(value("wings",Sit)==2))
+assert(value("output",Sit)=="Spider")
+
 
 # Test de check
 phi = {"wings" : 0, "stinger" : False}
@@ -132,3 +136,33 @@ assert(check(phi,Sit)==True)
 
 phi = {"wings" : 0, "stinger" : True}
 assert(check(phi,Sit)==False)
+
+phi = {"output" : "Spider"}
+assert(check(phi,Sit)==True)
+
+phi = {"output" : "Bee"}
+assert(check(phi,Sit)==False)
+
+
+# Test de AC1
+u = {'U': "Bee"}
+v = {'nb_legs' : 6, \
+    'stinger' : False, \
+    'nb_eyes' : 5, \
+    'compound_eyes' : True, \
+    'wings' : 4, \
+    'output': "Bee"}
+
+Sit = Situation(Mod,u,v)
+
+x = {"nb_legs" : 6}
+fact = {"output" : "Bee"}
+assert(test_AC1(x,fact,Sit))
+
+x = {"nb_legs" : 4}
+fact = {"output" : "Bee"}
+assert(test_AC1(x,fact,Sit)==False)
+
+
+# Test de AC2
+#print(test_AC2(x,fact,Sit))
