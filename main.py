@@ -54,6 +54,9 @@ class Situation:
 		self.M = M # class Model object
 		self.u = u # dict exgenous variable -> value
 		self.v = v # dict endogenous variable -> value
+		for k in self.M.V.keys():
+			if k not in v:
+				v[k] = None
 
 	def val_Parents(self,X):
 		"""
@@ -81,10 +84,14 @@ def value(X,Mu):
 	if len(parents) == 0:
         #cas de base = racine : retourner sa valeur
 		return Mu.u[X]
+
 	for k,v in parents.items():
 		if v == None: # on ne connait pas la valeur
 			parents[k] = value(k,Mu)
-	return Mu.M.G.P[X][1](Mu)
+
+	lparents = Mu.M.G.get_Parents(X)
+	lvalue = [parents[k] for k in lparents]
+	return Mu.M.G.P[X][1](lvalue)
 
 def check(phi,Mu):
 	"""
@@ -153,24 +160,29 @@ def test_AC2(X,fact,Mu):
 	"""
 	i = 0
 	#b = False
-	W = diff(Mu.S.V,X) #(Mu.S.V-X) #partition de V en X et W
+	W = diff(Mu.M.V,X) #(Mu.S.V-X) #partition de V en X et W
 	for sublW in subsets(dico2list(W)):
 		if len(sublW)>0:
 			subW = dict(sublW)
 			x_prim = [] #la liste de toutes les combinaisons possibles des valeurs de X
-			nb_possibilities=produit([len(r) for r in Mu.U.values()]+[len(r) for r in Mu.V.values()]) #nb de combinaisons possibles
+			nb_possibilities=produit([len(r) for r in Mu.M.U.values()]+[len(r) for r in Mu.M.V.values()]) #nb de combinaisons possibles
 			while(i<nb_possibilities):
 				tmp = []
-				for k,v in X:
+				for k,v in X.items():
 					new_val = v
 					while(new_val == v):
-						new_val= np.random.choice(Mu.M.V[k])
+						if k in Mu.M.V:
+							new_val= np.random.choice(Mu.M.V[k])
+						elif k in Mu.M.U:
+							new_val= np.random.choice(Mu.M.U[k])
+						else:
+							raise Exception("Variable inconnue")
 					tmp.append((k,new_val))
 				if tmp not in x_prim: #x_prim = already tested
 					x_prim.append(tmp)
 					i+=1
 					v = dict(tmp)
-					for w,val in subW:
+					for w,val in subW.items():
 						v[w]=val
 					newMu = Situation(Mu.M,Mu.u,v)
 					if(check_not(fact,newMu)):# si M,u |= [X <- x_prim et W <- w] Phi alors on renvoie false car il y a un autre ensemble de valeur != x qui satisfait Phi
