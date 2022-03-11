@@ -162,7 +162,7 @@ def search(args):
         yield list(prod)
     return result
 
-def test_AC2(X,fact,Mu):
+def test_AC2(X,fact,Mu,verbose=False):
 	"""
 	dict * dict * class Situation
 	return True iff AC2 is respected, False otherwise
@@ -173,22 +173,24 @@ def test_AC2(X,fact,Mu):
 	combi_test_w = search([l for l in W.values()]) # valeurs possibles pour w
 
 	var_test_xprime = list(X.keys())
-	combi_test_xprime_tmp = search([Mu.M.V[k] for k in X.keys()])
+	combi_test_xprime_tmp = search([Mu.M.V[k] for k in X.keys() if k in Mu.M.V.keys()] + [Mu.M.U[k] for k in X.keys() if k in Mu.M.U.keys()])
 	combi_test_xprime = [] # ensemble des valeurs possibles pour x'
 	for combi in combi_test_xprime_tmp:
 		for i in range(len(var_test_xprime)):
 			if X[var_test_xprime[i]] not in combi:
 				combi_test_xprime.append(combi)
-	#print(combi_test_xprime)
-	#cpt = -1
+
+	if verbose:
+		cpt = 0
 
 	for combi_w in combi_test_w:
-		#cpt += 1
 		w = dict() # dictionnaire representant W = w
 		for i in range(len(var_test_w)):
 			w[var_test_w[i]] = combi_w[i]
-		#print("Boucle " + str(cpt) + " w")
-		#print(w)
+		if verbose:
+			print("Boucle " + str(cpt) + " w")
+			print(w)
+			cpt += 1
 
 		if check(w,Mu):
 			for combi_xprime in combi_test_xprime:
@@ -196,13 +198,15 @@ def test_AC2(X,fact,Mu):
 				for i in range(len(var_test_xprime)):
 					xprime[var_test_xprime[i]] = combi_xprime[i]
 
-				#print("\tBoucle x'")
-				#print("\t",xprime)
-
 				newv = w.copy() # contient les variables de w et de x'
 				for var,val in xprime.items():
 					newv[var] = val
-				#print("\t",newv)
+
+				if verbose:
+					print("\tBoucle x'")
+					print("\t",xprime)
+					print("\t",newv)
+
 				newMu = Situation(Mu.M,Mu.u,newv)
 				if check_not(fact,newMu):
 					return True

@@ -13,9 +13,9 @@ def compute_prix_assurance(param):
 def compute_prix_Carburant(param):
     carbu = param['type_carburant']
     if carbu == 'Diesel': #type_carburant
-    	return 1.50
+        return 1.50
     elif carbu == 'Essence': #type_carburant
-    	return 1.6
+        return 1.6
     else:
     	return 0.72
 
@@ -113,3 +113,13 @@ assert(test_AC1(x,fact,Sit))
 x = {"prix_plein" : 0}
 fact = {"output" : "peu cher"}
 assert(not(test_AC1(x,fact,Sit)))
+
+
+# Test de AC2
+x = {"nb_chevaux" : 50}
+fact = {"output" : "peu cher"}
+print(test_AC2(x,fact,Sit,verbose=False))
+
+x = {'prix_carburant': 100, 'prix_plein': 100, 'prix_assurance' : 300, 'capacite_carburant': 300}
+fact = {"output" : "tres tres cher"}
+print(test_AC2(x,fact,Sit,verbose=True))
