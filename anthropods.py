@@ -74,7 +74,7 @@ def compute_output(param):
         return "Spider"
     elif (nb_legs,stinger,nb_eyes,compound_eyes,wings) == (6,False,2,True,2):
         return "Beetle"
-    elif (nb_legs,stinger,nb_eyes,compound_eyes,wings) == (6,False,5,True,4):
+    elif (nb_legs,stinger,nb_eyes,compound_eyes,wings) == (6,True,5,True,4):
         return "Bee"
     elif (nb_legs,stinger,nb_eyes,compound_eyes,wings) == (6,False,5,True,2):
         return "Fly"
@@ -147,7 +147,7 @@ assert(not(check(phi,Sit)))
 # Test de AC1
 u = {'U': "Bee"}
 v = {'nb_legs' : 6, \
-    'stinger' : False, \
+    'stinger' : True, \
     'nb_eyes' : 5, \
     'compound_eyes' : True, \
     'wings' : 4, \
@@ -155,14 +155,20 @@ v = {'nb_legs' : 6, \
 
 Sit = Situation(Mod,u,v)
 
-x = {"nb_legs" : 6}
-fact = {"output" : "Bee"}
-assert(test_AC1(x,fact,Sit))
-
 x = {"nb_legs" : 4}
 fact = {"output" : "Bee"}
 assert(not(test_AC1(x,fact,Sit)))
 
+x = {"nb_legs" : 6}
+fact = {"output" : "Bee"}
+assert(test_AC1(x,fact,Sit))
+
 
 # Test de AC2
-#print(test_AC2(x,fact,Sit))
+x = {"nb_legs" : 6}
+fact = {"output" : "Bee"}
+assert(test_AC2(x,fact,Sit))
+
+x = {"nb_legs" : 8}
+fact = {"output" : "Bee"}
+assert(not(test_AC2(x,fact,Sit)))

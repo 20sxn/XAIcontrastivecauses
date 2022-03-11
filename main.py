@@ -153,41 +153,99 @@ def dico2list(d):
 		l.append((k,v))
 	return l
 
+def search(args):
+    pools = [tuple(pool) for pool in args]
+    result = [[]]
+    for pool in pools:
+        result = [x+[y] for x in result for y in pool]
+    for prod in result:
+        yield list(prod)
+    return result
+
 def test_AC2(X,fact,Mu):
 	"""
 	dict * dict * class Situation
 	return True iff AC2 is respected, False otherwise
 	"""
-	i = 0
-	#b = False
-	W = diff(Mu.M.V,X) #(Mu.S.V-X) #partition de V en X et W
-	for sublW in subsets(dico2list(W)):
-		if len(sublW)>0:
-			subW = dict(sublW)
-			x_prim = [] #la liste de toutes les combinaisons possibles des valeurs de X
-			nb_possibilities=produit([len(r) for r in Mu.M.U.values()]+[len(r) for r in Mu.M.V.values()]) #nb de combinaisons possibles
-			while(i<nb_possibilities):
-				tmp = []
-				for k,v in X.items():
-					new_val = v
-					while(new_val == v):
-						if k in Mu.M.V:
-							new_val= np.random.choice(Mu.M.V[k])
-						elif k in Mu.M.U:
-							new_val= np.random.choice(Mu.M.U[k])
-						else:
-							raise Exception("Variable inconnue")
-					tmp.append((k,new_val))
-				if tmp not in x_prim: #x_prim = already tested
-					x_prim.append(tmp)
-					i+=1
-					v = dict(tmp)
-					for w,val in subW.items():
-						v[w]=val
-					newMu = Situation(Mu.M,Mu.u,v)
-					if(check_not(fact,newMu)):# si M,u |= [X <- x_prim et W <- w] Phi alors on renvoie false car il y a un autre ensemble de valeur != x qui satisfait Phi
-						return True
+	W = diff(Mu.M.V,X) # partition de V en X
+
+	var_test_w = list(W.keys())
+	combi_test_w = search([l for l in W.values()]) # valeurs possibles pour w
+
+	var_test_xprime = list(X.keys())
+	combi_test_xprime_tmp = search([Mu.M.V[k] for k in X.keys()])
+	combi_test_xprime = [] # ensemble des valeurs possibles pour x'
+	for combi in combi_test_xprime_tmp:
+		for i in range(len(var_test_xprime)):
+			if X[var_test_xprime[i]] not in combi:
+				combi_test_xprime.append(combi)
+	#print(combi_test_xprime)
+	#cpt = -1
+
+	for combi_w in combi_test_w:
+		#cpt += 1
+		w = dict() # dictionnaire representant W = w
+		for i in range(len(var_test_w)):
+			w[var_test_w[i]] = combi_w[i]
+		#print("Boucle " + str(cpt) + " w")
+		#print(w)
+
+		if check(w,Mu):
+			for combi_xprime in combi_test_xprime:
+				xprime = dict() # dictionnaire representant X = x'
+				for i in range(len(var_test_xprime)):
+					xprime[var_test_xprime[i]] = combi_xprime[i]
+
+				#print("\tBoucle x'")
+				#print("\t",xprime)
+
+				newv = w.copy() # contient les variables de w et de x'
+				for var,val in xprime.items():
+					newv[var] = val
+				#print("\t",newv)
+				newMu = Situation(Mu.M,Mu.u,newv)
+				if check_not(fact,newMu):
+					return True
+
 	return False
+
+
+
+# def test_AC2(X,fact,Mu):
+# 	"""
+# 	dict * dict * class Situation
+# 	return True iff AC2 is respected, False otherwise
+# 	"""
+# 	i = 0
+# 	#b = False
+# 	W = diff(Mu.M.V,X) #(Mu.S.V-X) #partition de V en X et W
+# 	for sublW in subsets(dico2list(W)):
+# 		if len(sublW)>0:
+# 			subW = dict(sublW)
+# 			x_prim = [] #la liste de toutes les combinaisons possibles des valeurs de X
+# 			nb_possibilities=produit([len(r) for r in Mu.M.U.values()]+[len(r) for r in Mu.M.V.values()]) #nb de combinaisons possibles
+# 			while(i<nb_possibilities):
+# 				tmp = []
+# 				for k,v in X.items():
+# 					new_val = v
+# 					while(new_val == v):
+# 						if k in Mu.M.V:
+# 							new_val= np.random.choice(Mu.M.V[k])
+# 						elif k in Mu.M.U:
+# 							new_val= np.random.choice(Mu.M.U[k])
+# 						else:
+# 							raise Exception("Variable inconnue")
+# 					tmp.append((k,new_val))
+# 				if tmp not in x_prim: #x_prim = already tested
+# 					x_prim.append(tmp)
+# 					i+=1
+# 					v = dict(tmp)
+# 					for w,val in subW.items():
+# 						v[w]=val
+# 					newMu = Situation(Mu.M,Mu.u,v)
+# 					if(check_not(fact,newMu)):# si M,u |= [X <- x_prim et W <- w] Phi alors on renvoie false car il y a un autre ensemble de valeur != x qui satisfait Phi
+# 						return True
+# 	return False
 
 def subsets(liste):
 	"""
