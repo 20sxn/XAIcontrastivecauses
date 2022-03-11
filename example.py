@@ -106,20 +106,20 @@ for k in Sit.v.keys():
     Sit.v[k] = value(k,Sit)
 #print(Sit.v)
 
-x = {"nb_chevaux" : 30}
+x = {"prix_carburant" : 1.5}
 fact = {"output" : "peu cher"}
 assert(test_AC1(x,fact,Sit))
 
-x = {"prix_plein" : 0}
-fact = {"output" : "peu cher"}
+x = {"prix_carburant" : 1.5}
+fact = {"output" : "tres tres cher"}
 assert(not(test_AC1(x,fact,Sit)))
 
 
 # Test de AC2
-x = {"nb_chevaux" : 50}
+x = {"prix_carburant" : 1.5}
 fact = {"output" : "peu cher"}
 print(test_AC2(x,fact,Sit,verbose=False))
 
-x = {'prix_carburant': 100, 'prix_plein': 100, 'prix_assurance' : 300, 'capacite_carburant': 300}
+x = {'prix_carburant': 0, 'prix_plein': 0, 'prix_assurance' : 0}
 fact = {"output" : "tres tres cher"}
-print(test_AC2(x,fact,Sit,verbose=True))
+print(test_AC2(x,fact,Sit,verbose=False))

@@ -173,20 +173,20 @@ def test_AC2(X,fact,Mu,verbose=False):
 	combi_test_w = search([l for l in W.values()]) # valeurs possibles pour w
 
 	var_test_xprime = list(X.keys())
-	combi_test_xprime_tmp = search([Mu.M.V[k] for k in X.keys() if k in Mu.M.V.keys()] + [Mu.M.U[k] for k in X.keys() if k in Mu.M.U.keys()])
-	combi_test_xprime = [] # ensemble des valeurs possibles pour x'
-	for combi in combi_test_xprime_tmp:
-		for i in range(len(var_test_xprime)):
-			if X[var_test_xprime[i]] not in combi:
-				combi_test_xprime.append(combi)
+	combi_test_xprime = list(search([Mu.M.V[k] for k in X.keys()])) # ensemble des valeurs possibles pour x'
+	for combi in combi_test_xprime:
+		if set(X.values()) == set(combi): # on s'assure que x' est différent de x
+			combi_test_xprime.remove(combi)
 
 	if verbose:
+		print(combi_test_xprime)
 		cpt = 0
 
 	for combi_w in combi_test_w:
 		w = dict() # dictionnaire representant W = w
 		for i in range(len(var_test_w)):
 			w[var_test_w[i]] = combi_w[i]
+
 		if verbose:
 			print("Boucle " + str(cpt) + " w")
 			print(w)
@@ -272,11 +272,14 @@ def subsets_size(liste,n):
 def test_AC3(X,fact,Mu):
 	"""
 	dict * dict * class Situation
-	return True iff AC1 is respected, False otherwise
+	return True iff AC3 is respected, False otherwise
 	"""
-	subsets_x = subsets_size(X,len(X)) #Tous les sous-ensembles possibles de X
+	subsets_x = subsets_size(list(X.keys()),len(X)) #Tous les sous-ensembles possibles de X
 	for sub in subsets_x:
-		if(test_AC1(sub,fact,Mu) and (test_AC2(sub,Mu))):
+		newx = dict()
+		for var in sub:
+			newx[var] = X[var]
+		if(test_AC1(newx,fact,Mu) and (test_AC2(newx,fact,Mu))):
 			return False
 	return True
 
@@ -300,7 +303,7 @@ def test_partial_cause(x,phi,Mu):
 	"""
 	return True iff x is a partial cause of phi in Mu=(M,u)
 	"""
-	return test_actual_cause(phi,Mu) and is_subset(x,phi)
+	return test_actual_cause(x,phi,Mu) #and is_subset(x,phi)
 
 def test_CC1(X,fact,Mu):
     """
@@ -356,7 +359,7 @@ def test_CC4(x,y):
 	dict * dict -> bool
 	return True iff CC4 is respected, False otherwise
 	"""
-	return (len(diff_cond(x,y))==0)
+	return (len(diff_cond(x,y))>0)
 
 
 def test_CC5(X,fact,foil):
