@@ -70,6 +70,13 @@ class Situation:
 			elif k in list(self.v.keys()):
 				res[k] = self.v[k]
 		return res
+	
+	def set_val_v(self):
+		for k,v in self.v.items():
+			if v == None:
+				self.v[k] = value(k,self)
+
+
 
 
 	#update functions
@@ -89,8 +96,6 @@ def value(X,Mu):
 		if v == None: # on ne connait pas la valeur
 			parents[k] = value(k,Mu)
 
-	#lparents = Mu.M.G.get_Parents(X)
-	#lvalue = [parents[k] for k in lparents]
 	return Mu.M.G.P[X][1](parents)
 
 def check(phi,Mu):
@@ -213,43 +218,57 @@ def test_AC2(X,fact,Mu,verbose=False):
 
 	return False
 
+def test_AC2v2(X,fact,Mu,verbose=False):
+	"""
+	dict * dict * class Situation
+	return True iff AC2 is respected, False otherwise
+	"""
+	Mutmp = copy.deepcopy(Mu)
+	Mutmp.set_val_v()
+	W = diff(Mutmp.v,X) # partition de V en X
+
+	var_test_xprime = list(X.keys())
+	combi_test_xprime = list(search([Mutmp.M.V[k] for k in X.keys()])) # ensemble des valeurs possibles pour x'
+	for combi in combi_test_xprime:
+		if set(X.values()) == set(combi): # on s'assure que x' est différent de x
+			combi_test_xprime.remove(combi)
+
+	if verbose:
+		print(combi_test_xprime)
+		cpt = 0
+
+	for sublW in subsets(dico2list(W)):
+		if len(sublW)>0:
+			w = dict(sublW)
+
+			if verbose:
+				print("Boucle " + str(cpt) + " w")
+				print(w)
+				cpt += 1
 
 
-# def test_AC2(X,fact,Mu):
-# 	"""
-# 	dict * dict * class Situation
-# 	return True iff AC2 is respected, False otherwise
-# 	"""
-# 	i = 0
-# 	#b = False
-# 	W = diff(Mu.M.V,X) #(Mu.S.V-X) #partition de V en X et W
-# 	for sublW in subsets(dico2list(W)):
-# 		if len(sublW)>0:
-# 			subW = dict(sublW)
-# 			x_prim = [] #la liste de toutes les combinaisons possibles des valeurs de X
-# 			nb_possibilities=produit([len(r) for r in Mu.M.U.values()]+[len(r) for r in Mu.M.V.values()]) #nb de combinaisons possibles
-# 			while(i<nb_possibilities):
-# 				tmp = []
-# 				for k,v in X.items():
-# 					new_val = v
-# 					while(new_val == v):
-# 						if k in Mu.M.V:
-# 							new_val= np.random.choice(Mu.M.V[k])
-# 						elif k in Mu.M.U:
-# 							new_val= np.random.choice(Mu.M.U[k])
-# 						else:
-# 							raise Exception("Variable inconnue")
-# 					tmp.append((k,new_val))
-# 				if tmp not in x_prim: #x_prim = already tested
-# 					x_prim.append(tmp)
-# 					i+=1
-# 					v = dict(tmp)
-# 					for w,val in subW.items():
-# 						v[w]=val
-# 					newMu = Situation(Mu.M,Mu.u,v)
-# 					if(check_not(fact,newMu)):# si M,u |= [X <- x_prim et W <- w] Phi alors on renvoie false car il y a un autre ensemble de valeur != x qui satisfait Phi
-# 						return True
-# 	return False
+			for combi_xprime in combi_test_xprime:
+				xprime = dict() # dictionnaire representant X = x'
+				for i in range(len(var_test_xprime)):
+					xprime[var_test_xprime[i]] = combi_xprime[i]
+
+				newv = w.copy() # contient les variables de w et de x'
+				for var,val in xprime.items():
+					newv[var] = val
+
+				if verbose:
+					print("\tBoucle x'")
+					print("\t",xprime)
+					print("\t",newv)
+
+				newMu = Situation(Mutmp.M,Mutmp.u,newv)
+				if check_not(fact,newMu):
+					return True
+
+	return False
+
+
+
 
 def subsets(liste):
 	"""
