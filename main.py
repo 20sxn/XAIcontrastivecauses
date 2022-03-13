@@ -72,6 +72,9 @@ class Situation:
 		return res
 	
 	def set_val_v(self):
+		"""
+		Calcule les valeurs de v non définies
+		"""
 		for k,v in self.v.items():
 			if v == None:
 				self.v[k] = value(k,self)
@@ -159,13 +162,17 @@ def dico2list(d):
 	return l
 
 def search(args):
-    pools = [tuple(pool) for pool in args]
-    result = [[]]
-    for pool in pools:
-        result = [x+[y] for x in result for y in pool]
-    for prod in result:
-        yield list(prod)
-    return result
+	"""
+	list[list] -> list[list]
+	retourne le produit cartesien des ensembles dans la liste args
+	"""
+	pools = [tuple(pool) for pool in args]
+	result = [[]]
+	for pool in pools:
+		result = [x+[y] for x in result for y in pool]
+	for prod in result:
+		yield list(prod)
+	return result
 
 def test_AC2(X,fact,Mu,verbose=False):
 	"""
@@ -407,20 +414,72 @@ def test_counterfactual_cause(x, y, fact, foil, Mu):
     a = a and test_CC5(x,fact,foil)
     return a
 
+def sub(dic1,dic2):
+    """
+    return True if forall k in dic1.keys(), k in dic2.keys()
+    """
+    for k in dic1.keys():
+        if k not in dic2.keys():
+            return False
+    return True
 
-def actual_cause_generator(fact,Mu):
+def actual_cause_generator(fact,Mu,verbose = False):
 	"""
 	dict * situation -> dict
 	retourne une cause actuelle de fact dans la situation (M,u)
 	"""
-	xu = Mu.u
-	xv = Mu.v
+	Mutmp = copy.deepcopy(Mu)
+	Mutmp.set_val_v()
+
+	lres = []
+
+	xu = Mutmp.u
+	xu = dict() #temporaire : a voir si on test sur les variables exo, voir combi_test_xprime(test_AC2)
+	xv = Mutmp.v
 	to_test = list(sorted(subsets(dico2list(xu)+dico2list(xv)),key = len))[1:] 	#enumere toutes les combinaisons de variables a tester
 																				#on les tris par taille pour vérifier AC3 par construction
 	for lx in to_test:
-		if  test_AC1(dict(lx),fact,Mu) and test_AC2(dict(lx),fact,Mu): #AC3 vraie par construction
-			return dict(lx)
-	return dict() #s'il n'y a pas de cause actuelle
+		if verbose:
+			print(lx)
+		if  test_AC1(dict(lx),fact,Mutmp) and test_AC2(dict(lx),fact,Mutmp): #AC3 vraie par construction
+			condAC3 = True
+			for d in lres:
+				if sub(d,dict(lx)): #Test AC3
+					condAC3 = False
+					break
+			if condAC3:
+				lres.append(dict(lx))
+	return lres
+
+
+def actual_cause_generator_v2(fact,Mu,verbose = False): #same fuction, only difference : test_AC2 -> test_AC2v2
+	"""
+	dict * situation -> dict
+	retourne une cause actuelle de fact dans la situation (M,u)
+	"""
+	Mutmp = copy.deepcopy(Mu)
+	Mutmp.set_val_v()
+
+	lres = []
+
+	xu = Mutmp.u
+	xu = dict() #temporaire : a voir si on test sur les variables exo, voir combi_test_xprime(test_AC2)
+	xv = Mutmp.v
+	to_test = list(sorted(subsets(dico2list(xu)+dico2list(xv)),key = len))[1:] 	#enumere toutes les combinaisons de variables a tester
+																				#on les tris par taille pour vérifier AC3 par construction
+	for lx in to_test:
+		if verbose:
+			print(lx)
+		if  test_AC1(dict(lx),fact,Mutmp) and test_AC2v2(dict(lx),fact,Mutmp): #AC3 vraie par construction
+			
+			condAC3 = True
+			for d in lres:
+				if sub(d,dict(lx)): #Test AC3
+					condAC3 = False
+					break
+			if condAC3:
+				lres.append(dict(lx))
+	return lres
 
 def counterfactual_cause_generator(fact,foil,Mu):
 	acx = actual_cause_generator(fact,Mu)
