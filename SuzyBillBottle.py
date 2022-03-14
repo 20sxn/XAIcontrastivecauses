@@ -60,4 +60,6 @@ Mu.set_val_v()
 fact = {'BS':True}
 
 for d in actual_cause_generator_v2(fact,Mu):
+    assert test_AC1(d,fact,Mu) == True
     assert test_AC2v2(d,fact,Mu) == True
+    assert test_AC3v2(d,fact,Mu) == True

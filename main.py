@@ -78,9 +78,13 @@ class Situation:
 		for k,v in self.v.items():
 			if v == None:
 				self.v[k] = value(k,self)
-
-
-
+	
+	def reset_val_v(self):
+		"""
+		Mets toutes les valeurs de v à None
+		"""
+		for k in self.M.V.keys():
+			self.v[k]=None
 
 	#update functions
 
@@ -306,6 +310,20 @@ def test_AC3(X,fact,Mu):
 		for var in sub:
 			newx[var] = X[var]
 		if(test_AC1(newx,fact,Mu) and (test_AC2(newx,fact,Mu))):
+			return False
+	return True
+
+def test_AC3v2(X,fact,Mu):
+	"""
+	dict * dict * class Situation
+	return True iff AC3 is respected, False otherwise
+	"""
+	subsets_x = subsets_size(list(X.keys()),len(X)) #Tous les sous-ensembles possibles de X
+	for sub in subsets_x:
+		newx = dict()
+		for var in sub:
+			newx[var] = X[var]
+		if(test_AC1(newx,fact,Mu) and (test_AC2v2(newx,fact,Mu))):
 			return False
 	return True
 

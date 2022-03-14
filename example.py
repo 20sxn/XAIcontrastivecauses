@@ -49,7 +49,7 @@ V = {'prix_carburant':[1.50,1.6,0.72], \
     'prix_plein':[72.0, 76.5, 81.0, 85.5, 102.0, 108.0, 114.0, 144.0, 153.0, 162.0, 171.0, 192.0, 204.0, 216.0, 228.0, 76.8, 81.6, 86.4, 91.2, 102.4,
 108.8, 115.2, 121.6, 153.6, 163.2, 172.8, 182.4, 204.8, 217.6, 230.4, 243.2, 34.56, 36.72, 38.88, 41.04, 46.08, 48.96,
 51.84, 54.72, 69.12, 73.44, 77.76, 82.08, 92.16, 97.92, 103.68, 109.44], \
-    'prix_assurance':[1.18, 1.49, 1.93, 2.60, 3.7, 5.67, 9.77, 20.66, 69.44, 250], \
+    'prix_assurance':[1.18, 1.49, 1.93, 2.60, 3.7, 5.67, 9.77, 20.66, 69.44, 2500], \
     'capacite_carburant':[48, 51, 54, 57, 64, 68, 72, 76, 96, 102, 108, 114, 128, 136, 144, 152], \
     'output':['peu cher','cher','très cher','très très cher']}
 
@@ -118,8 +118,18 @@ assert(not(test_AC1(x,fact,Sit)))
 # Test de AC2
 x = {"prix_carburant" : 1.5}
 fact = {"output" : "peu cher"}
-print(test_AC2(x,fact,Sit,verbose=False))
+#print(test_AC2(x,fact,Sit,verbose=False))
 
 x = {'prix_carburant': 0, 'prix_plein': 0, 'prix_assurance' : 0}
 fact = {"output" : "tres tres cher"}
-print(test_AC2(x,fact,Sit,verbose=False))
+#print(test_AC2(x,fact,Sit,verbose=False))
+
+#test ACgenerator
+Mu = copy.deepcopy(Sit)
+Mu.set_val_v()
+fact = {'output':'peu cher'}
+
+for d in actual_cause_generator_v2(fact,Sit):
+    assert test_AC1(d,fact,Mu)
+    assert test_AC2v2(d,fact,Mu)
+    assert test_AC3v2(d,fact,Mu)
