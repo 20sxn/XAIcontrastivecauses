@@ -1,6 +1,5 @@
 ### Main things to deal with causes
 
-import numpy as np
 import copy
 
 class CausalGraph:
@@ -77,7 +76,7 @@ class Situation:
 		"""
 		for k,v in self.v.items():
 			if v == None:
-				self.v[k] = value(k,self)
+				self.v[k] = value(k,self,set_val=True)
 	
 	def reset_val_v(self):
 		"""
@@ -89,11 +88,16 @@ class Situation:
 	#update functions
 
 
-def value(X,Mu):
+def value(X,Mu,set_val = False):
 	"""
 	variable * Situation -> value
 	Calculer la valeur de la variable X en fonction des autres variables
     """
+	if X in Mu.u:
+		return Mu.u[X]
+	if X in Mu.v:
+		if Mu.v[X] != None:
+			return Mu.v[X]
 	parents = Mu.val_Parents(X)   #dictionnaire noeuds parent de X dans M.G -> valeur
 	if len(parents) == 0:
         #cas de base = racine : retourner sa valeur
@@ -102,7 +106,8 @@ def value(X,Mu):
 	for k,v in parents.items():
 		if v == None: # on ne connait pas la valeur
 			parents[k] = value(k,Mu)
-
+	if set_val:
+		Mu.v[X] = Mu.M.G.P[X][1](parents)
 	return Mu.M.G.P[X][1](parents)
 
 def check(phi,Mu):
@@ -174,8 +179,8 @@ def search(args):
 	result = [[]]
 	for pool in pools:
 		result = [x+[y] for x in result for y in pool]
-	for prod in result:
-		yield list(prod)
+	#for prod in result:
+	#	yield list(prod)
 	return result
 
 def test_AC2(X,fact,Mu,verbose=False):
@@ -435,6 +440,7 @@ def test_counterfactual_cause(x, y, fact, foil, Mu):
 def sub(dic1,dic2):
     """
     return True if forall k in dic1.keys(), k in dic2.keys()
+	i.e. dic1.keys() \in dic2.keys()
     """
     for k in dic1.keys():
         if k not in dic2.keys():
@@ -473,8 +479,10 @@ def actual_cause_generator(fact,Mu,verbose = False):
 def actual_cause_generator_v2(fact,Mu,verbose = False): #same fuction, only difference : test_AC2 -> test_AC2v2
 	"""
 	dict * situation -> dict
-	retourne une cause actuelle de fact dans la situation (M,u)
+	retourne la liste des causes effective de fact dans la situation (M,u)
 	"""
+	if not check(fact,Mu): #si fact n'est pas vérififié dans la situation (M,u)
+		return []
 	Mutmp = copy.deepcopy(Mu)
 	Mutmp.set_val_v()
 
@@ -486,20 +494,106 @@ def actual_cause_generator_v2(fact,Mu,verbose = False): #same fuction, only diff
 	to_test = list(sorted(subsets(dico2list(xu)+dico2list(xv)),key = len))[1:] 	#enumere toutes les combinaisons de variables a tester
 																				#on les tris par taille pour vérifier AC3 par construction
 	for lx in to_test:
+		x = dict(lx)
 		if verbose:
 			print(lx)
-		if  test_AC1(dict(lx),fact,Mutmp) and test_AC2v2(dict(lx),fact,Mutmp): #AC3 vraie par construction
+		if  test_AC1(x,fact,Mutmp) and test_AC2v2(x,fact,Mutmp): #AC3 vraie par construction
 			
 			condAC3 = True
 			for d in lres:
-				if sub(d,dict(lx)): #Test AC3
+				if sub(d,x): #Test AC3
 					condAC3 = False
 					break
 			if condAC3:
-				lres.append(dict(lx))
+				lres.append(x)
 	return lres
 
-def counterfactual_cause_generator(fact,foil,Mu):
-	acx = actual_cause_generator(fact,Mu)
-	allX = subsets(dico2list(acx))
-	pass
+
+def counterfactual_cause_generator(fact,foil,Mu,verbose = False):
+	"""
+	dict * dict * situation -> dict
+	retourne la liste des causes contrefactuelle de (fact,foil) dans la situation Mu
+	"""
+	Mutmp = copy.deepcopy(Mu)
+	#CC1
+	ac = actual_cause_generator_v2(fact,Mutmp)
+	lx = []
+	for c in ac:
+		[lx.append(i) for i in subsets(dico2list(c))[1:] if i not in lx]
+	lx = sorted(lx,key = len,reverse = True)
+	for i in range(len(lx)):
+		lx[i] = dict(lx[i]) 
+    
+    #CC2
+	if not check_not(foil,Mu):
+		raise Exception('foil is True under Mu')
+    
+	if not check(fact,Mu): #not in CC2 but better to test it early on.
+		raise Exception('fact is False under Mu')
+        
+    #CC4
+	l_X = [] #liste des valeurs possible pour X
+	[l_X.append(dict()) for i in range(len(lx))]
+	for i in range(len(l_X)):
+		for key in lx[i]:
+			l_X[i][key] = Mu.M.V[key]
+
+
+	combi_test_y = [] #combinaison de valeurs a tester pour X = y
+	[combi_test_y.append(search([l for l in l_X[i].values()])) for i in range(len(l_X))]
+
+	ly = [] #liste des listes des X = y en sachant X = x   
+	for i in range(len(l_X)):
+		ly.append([])
+		var_X = list(l_X[i].keys())
+		for combi_y in combi_test_y[i]:
+			ly[i].append(dict())
+			for j in range(len(var_X)):
+				ly[i][-1][var_X[j]] = combi_y[j]
+        
+	for i in range(len(ly)):
+		if lx[i] in ly[i] : ly[i].remove(lx[i]) #CC4
+	if verbose:
+		for i in range(len(ly)):
+			print(ly[i])
+			print(lx[i])
+    #CC3
+	lres = []
+	for iteration in range(len(ly)): #une itération = une cause partielle de X
+		for y in ly[iteration]:
+			allW = diff(Mu.M.V,y)
+			for subW in subsets(dico2list(allW)):
+				if len(subW)>0: #non Empty
+
+					W = dict(subW) #list of all value for a each variable of W
+
+					var_test_w = list(W.keys())
+					combi_test_w = search([l for l in W.values()]) #list of all possible value for W
+
+					for combi_w in combi_test_w:
+						w = dict() # dictionnaire representant W = w
+						for i in range(len(var_test_w)):
+							w[var_test_w[i]] = combi_w[i]
+
+						newv = w.copy()
+						for k,v in y.items():
+							newv[k] = v
+							
+						newMu = Situation(Mu.M,Mu.u,newv)
+						#test partial cause (y is a partial cause of foil under this Situation)
+						lac = actual_cause_generator_v2(foil,newMu)
+						for c in lac: #we must test for each of these cause if X=y \in c
+							if verbose:
+								print("-"*70)
+								print(c)
+								print(y)
+								print("-"*70)
+							if sub(y,c): #X=y is a partial cause of foil
+								condCC5 = True
+								for d in lres:
+									if sub(y,d[1]): #if y \in d[1] for some d in lres then CC5 is false
+										condCC5 = False
+										break
+								if condCC5:
+									lres.append((lx[iteration],y)) #if all CC1-5 holds for (X = x,X = y) then its a CC.
+	return lres
