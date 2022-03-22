@@ -255,7 +255,7 @@ def test_AC2v2(X,fact,Mu,verbose=False):
 
 	for sublW in subsets(dico2list(W)):
 		if len(sublW)>0:
-			w = dict(sublW)
+			w = dict(sublW) #peut etre verifier si w non vide à demander
 
 			if verbose:
 				print("Boucle " + str(cpt) + " w")
@@ -505,7 +505,8 @@ def actual_cause_generator_v2(fact,Mu,verbose = False): #same fuction, only diff
 					condAC3 = False
 					break
 			if condAC3:
-				lres.append(x)
+				if not sub(fact,x): #on ne veut pas que le fact se retrouve comme cause de lui meme.
+					lres.append(x)
 	return lres
 
 
@@ -562,6 +563,7 @@ def counterfactual_cause_generator(fact,foil,Mu,verbose = False):
 	for iteration in range(len(ly)): #une itération = une cause partielle de X
 		for y in ly[iteration]:
 			allW = diff(Mu.M.V,y)
+			allW = diff(allW,foil)
 			for subW in subsets(dico2list(allW)):
 				if len(subW)>0: #non Empty
 
@@ -585,6 +587,9 @@ def counterfactual_cause_generator(fact,foil,Mu,verbose = False):
 						for c in lac: #we must test for each of these cause if X=y \in c
 							if verbose:
 								print("-"*70)
+								tmp = copy.deepcopy(newMu)
+								print(value('output',tmp))
+								print(newv)
 								print(c)
 								print(y)
 								print("-"*70)

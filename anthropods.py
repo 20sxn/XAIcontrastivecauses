@@ -69,7 +69,7 @@ def compute_wings(param):
         return None
 
 def compute_output(param):
-    (nb_legs,stinger,nb_eyes,compound_eyes,wings) = (param["nb_legs"],param["stinger"],param["nb_eyes"],param["compound_eyes"],Sit.v["wings"],)
+    (nb_legs,stinger,nb_eyes,compound_eyes,wings) = (param["nb_legs"],param["stinger"],param["nb_eyes"],param["compound_eyes"],param["wings"],)
     if (nb_legs,stinger,nb_eyes,compound_eyes,wings) == (8,False,8,False,0):
         return "Spider"
     elif (nb_legs,stinger,nb_eyes,compound_eyes,wings) == (6,False,2,True,2):
