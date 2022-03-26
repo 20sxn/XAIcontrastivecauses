@@ -447,6 +447,18 @@ def sub(dic1,dic2):
             return False
     return True
 
+def fullsub(dic1,dic2):
+	"""
+	return True if forall k,v in dic1.items, k,v in dic2.items()
+	i.e. dic1 \in dic2
+	"""
+	for k,v in dic1.items():
+		if k not in dic2:
+			return False
+		elif v!= dic2[k]:
+			return False
+	return True
+
 def actual_cause_generator(fact,Mu,verbose = False):
 	"""
 	dict * situation -> dict
@@ -488,7 +500,7 @@ def actual_cause_generator_v2(fact,Mu,verbose = False): #same fuction, only diff
 
 	lres = []
 
-	xu = Mutmp.u
+	#xu = Mutmp.u
 	xu = dict() #temporaire : a voir si on test sur les variables exo, voir combi_test_xprime(test_AC2)
 	xv = Mutmp.v
 	to_test = list(sorted(subsets(dico2list(xu)+dico2list(xv)),key = len))[1:] 	#enumere toutes les combinaisons de variables a tester
@@ -497,14 +509,13 @@ def actual_cause_generator_v2(fact,Mu,verbose = False): #same fuction, only diff
 		x = dict(lx)
 		if verbose:
 			print(lx)
-		if  test_AC1(x,fact,Mutmp) and test_AC2v2(x,fact,Mutmp): #AC3 vraie par construction
-			
-			condAC3 = True
-			for d in lres:
-				if sub(d,x): #Test AC3
-					condAC3 = False
-					break
-			if condAC3:
+		condAC3 = True
+		for d in lres:
+			if sub(d,x): #Test AC3
+				condAC3 = False
+				break
+		if condAC3:
+			if  test_AC1(x,fact,Mutmp) and test_AC2v2(x,fact,Mutmp): #AC3 vraie par construction
 				if not sub(fact,x): #on ne veut pas que le fact se retrouve comme cause de lui meme.
 					lres.append(x)
 	return lres
@@ -562,43 +573,50 @@ def counterfactual_cause_generator(fact,foil,Mu,verbose = False):
 	lres = []
 	for iteration in range(len(ly)): #une itération = une cause partielle de X
 		for y in ly[iteration]:
-			allW = diff(Mu.M.V,y)
-			allW = diff(allW,foil)
-			for subW in subsets(dico2list(allW)):
-				if len(subW)>0: #non Empty
+			condCC5 = True
+			for d in lres:
+				if fullsub(y,d[1]): #if y \in d[1] for some d in lres then CC5 is false
+					condCC5 = False #may want to choose better the subsomption fucntion depending on what we want
+					break
+			if condCC5:
+				allW = diff(Mu.M.V,y)
+				allW = diff(allW,foil)
+				for subW in subsets(dico2list(allW)):
+					stop = False
+					if len(subW)>0: #non Empty
 
-					W = dict(subW) #list of all value for a each variable of W
+						W = dict(subW) #list of all value for a each variable of W
 
-					var_test_w = list(W.keys())
-					combi_test_w = search([l for l in W.values()]) #list of all possible value for W
+						var_test_w = list(W.keys())
+						combi_test_w = search([l for l in W.values()]) #list of all possible value for W
 
-					for combi_w in combi_test_w:
-						w = dict() # dictionnaire representant W = w
-						for i in range(len(var_test_w)):
-							w[var_test_w[i]] = combi_w[i]
+						for combi_w in combi_test_w:
+							w = dict() # dictionnaire representant W = w
+							for i in range(len(var_test_w)):
+								w[var_test_w[i]] = combi_w[i]
 
-						newv = w.copy()
-						for k,v in y.items():
-							newv[k] = v
-							
-						newMu = Situation(Mu.M,Mu.u,newv)
-						#test partial cause (y is a partial cause of foil under this Situation)
-						lac = actual_cause_generator_v2(foil,newMu)
-						for c in lac: #we must test for each of these cause if X=y \in c
-							if verbose:
-								print("-"*70)
-								tmp = copy.deepcopy(newMu)
-								print(value('output',tmp))
-								print(newv)
-								print(c)
-								print(y)
-								print("-"*70)
-							if sub(y,c): #X=y is a partial cause of foil
-								condCC5 = True
-								for d in lres:
-									if sub(y,d[1]): #if y \in d[1] for some d in lres then CC5 is false
-										condCC5 = False
-										break
-								if condCC5:
+							newv = w.copy()
+							for k,v in y.items():
+								newv[k] = v
+								
+							newMu = Situation(Mu.M,Mu.u,newv)
+							#test partial cause (y is a partial cause of foil under this Situation)
+							lac = actual_cause_generator_v2(foil,newMu)
+							for c in lac: #we must test for each of these cause if X=y \in c
+								if verbose:
+									print("-"*70)
+									tmp = copy.deepcopy(newMu)
+									print(value('output',tmp))
+									print(newv)
+									print(c)
+									print(y)
+									print("-"*70)
+								if sub(y,c): #X=y is a partial cause of foil									
 									lres.append((lx[iteration],y)) #if all CC1-5 holds for (X = x,X = y) then its a CC.
+									stop = True
+									break
+							if stop:
+								break
+					if stop:
+						break
 	return lres
