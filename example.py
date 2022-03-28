@@ -118,18 +118,18 @@ assert(not(test_AC1(x,fact,Sit)))
 # Test de AC2
 x = {"prix_carburant" : 1.5}
 fact = {"output" : "peu cher"}
-#print(test_AC2(x,fact,Sit,verbose=False))
+print(test_AC2(x,fact,Sit,verbose=False))
 
 x = {'prix_carburant': 0, 'prix_plein': 0, 'prix_assurance' : 0}
 fact = {"output" : "tres tres cher"}
-#print(test_AC2(x,fact,Sit,verbose=False))
+print(test_AC2(x,fact,Sit,verbose=False))
 
 #test ACgenerator
 Mu = copy.deepcopy(Sit)
 Mu.set_val_v()
 fact = {'output':'peu cher'}
 
-for d in actual_cause_generator_v2(fact,Sit):
+for d in actual_cause_generator(fact,Sit):
     assert test_AC1(d,fact,Mu)
-    assert test_AC2v2(d,fact,Mu)
-    assert test_AC3v2(d,fact,Mu)
+    assert test_AC2(d,fact,Mu)
+    assert test_AC3(d,fact,Mu)

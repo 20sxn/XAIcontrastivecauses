@@ -88,6 +88,7 @@ class Situation:
 	#update functions
 
 
+## GRAPH MANIPULATION
 def value(X,Mu,set_val = False):
 	"""
 	variable * Situation -> value
@@ -132,15 +133,6 @@ def check_not(psi,Mu):
 	return False
 
 ## PREDICATES TO PROVE X=x ACTUAL CAUSE OF phi IN (M,u) [see p.9-10]
-
-def test_AC1(x,fact,Mu):
-	"""
-	dict * dict * class Situation
-	return True iff AC1 is respected, False otherwise
-	"""
-	return check(x,Mu) and check(fact,Mu)
-
-
 def produit(liste):
 	"""
 	list -> float
@@ -183,58 +175,56 @@ def search(args):
 	#	yield list(prod)
 	return result
 
-def test_AC2(X,fact,Mu,verbose=False):
+def subsets(liste):
+	"""
+	list -> list
+	return the list of all subsets of liste
+	"""
+	if len(liste)==0:
+		return [[]]
+	x = subsets(liste[1:])
+	return x + [[liste[0]] + y for y in x]
+
+def subsets_size(liste,n):
+	"""
+	list * int -> list(int)
+	return the list of elements of liste that have length < n
+	"""
+	return [l for l in subsets(liste) if len(l)<n]
+
+def sub(dic1,dic2):
+    """
+    return True if forall k in dic1.keys(), k in dic2.keys()
+	i.e. dic1.keys() \in dic2.keys()
+    """
+    for k in dic1.keys():
+        if k not in dic2.keys():
+            return False
+    return True
+
+def fullsub(dic1,dic2):
+	"""
+	return True if forall k,v in dic1.items, k,v in dic2.items()
+	i.e. dic1 \in dic2
+	"""
+	for k,v in dic1.items():
+		if k not in dic2:
+			return False
+		elif v!= dic2[k]:
+			return False
+	return True
+
+#TESTING ACTUAL CAUSE
+
+def test_AC1(x,fact,Mu):
 	"""
 	dict * dict * class Situation
-	return True iff AC2 is respected, False otherwise
+	return True iff AC1 is respected, False otherwise
 	"""
-	W = diff(Mu.M.V,X) # partition de V en X
+	return check(x,Mu) and check(fact,Mu)
 
-	var_test_w = list(W.keys())
-	combi_test_w = search([l for l in W.values()]) # valeurs possibles pour w
 
-	var_test_xprime = list(X.keys())
-	combi_test_xprime = list(search([Mu.M.V[k] for k in X.keys()])) # ensemble des valeurs possibles pour x'
-	for combi in combi_test_xprime:
-		if set(X.values()) == set(combi): # on s'assure que x' est différent de x
-			combi_test_xprime.remove(combi)
-
-	if verbose:
-		print(combi_test_xprime)
-		cpt = 0
-
-	for combi_w in combi_test_w:
-		w = dict() # dictionnaire representant W = w
-		for i in range(len(var_test_w)):
-			w[var_test_w[i]] = combi_w[i]
-
-		if verbose:
-			print("Boucle " + str(cpt) + " w")
-			print(w)
-			cpt += 1
-
-		if check(w,Mu):
-			for combi_xprime in combi_test_xprime:
-				xprime = dict() # dictionnaire representant X = x'
-				for i in range(len(var_test_xprime)):
-					xprime[var_test_xprime[i]] = combi_xprime[i]
-
-				newv = w.copy() # contient les variables de w et de x'
-				for var,val in xprime.items():
-					newv[var] = val
-
-				if verbose:
-					print("\tBoucle x'")
-					print("\t",xprime)
-					print("\t",newv)
-
-				newMu = Situation(Mu.M,Mu.u,newv)
-				if check_not(fact,newMu):
-					return True
-
-	return False
-
-def test_AC2v2(X,fact,Mu,verbose=False):
+def test_AC2(X,fact,Mu,verbose=False):
 	"""
 	dict * dict * class Situation
 	return True iff AC2 is respected, False otherwise
@@ -244,7 +234,7 @@ def test_AC2v2(X,fact,Mu,verbose=False):
 	W = diff(Mutmp.v,X) # partition de V en X
 
 	var_test_xprime = list(X.keys())
-	combi_test_xprime = list(search([Mutmp.M.V[k] for k in X.keys()])) # ensemble des valeurs possibles pour x'
+	combi_test_xprime = search([Mutmp.M.V[k] for k in X.keys()]) # ensemble des valeurs possibles pour x'
 	for combi in combi_test_xprime:
 		if set(X.values()) == set(combi): # on s'assure que x' est différent de x
 			combi_test_xprime.remove(combi)
@@ -264,45 +254,26 @@ def test_AC2v2(X,fact,Mu,verbose=False):
 
 
 			for combi_xprime in combi_test_xprime:
-				xprime = dict() # dictionnaire representant X = x'
-				for i in range(len(var_test_xprime)):
-					xprime[var_test_xprime[i]] = combi_xprime[i]
+				#xprime = dict() # dictionnaire representant X = x'
+				#for i in range(len(var_test_xprime)):
+				#	xprime[var_test_xprime[i]] = combi_xprime[i]
 
-				newv = w.copy() # contient les variables de w et de x'
-				for var,val in xprime.items():
-					newv[var] = val
+				#newv = w.copy() # contient les variables de w et de x'
+				#for var,val in xprime.items():
+				#	newv[var] = val
+				newv = w.copy()
+				for i in range(len(var_test_xprime)):
+					newv[var_test_xprime[i]] = combi_xprime[i]
 
 				if verbose:
 					print("\tBoucle x'")
-					print("\t",xprime)
+					#print("\t",xprime)
 					print("\t",newv)
 
 				newMu = Situation(Mutmp.M,Mutmp.u,newv)
 				if check_not(fact,newMu):
 					return True
-
 	return False
-
-
-
-
-def subsets(liste):
-	"""
-	list -> list
-	return the list of all subsets of liste
-	"""
-	if len(liste)==0:
-		return [[]]
-	x = subsets(liste[1:])
-	return x + [[liste[0]] + y for y in x]
-
-def subsets_size(liste,n):
-	"""
-	list * int -> list(int)
-	return the list of elements of liste that have length < n
-	"""
-	return [l for l in subsets(liste) if len(l)<n]
-
 
 def test_AC3(X,fact,Mu):
 	"""
@@ -315,20 +286,6 @@ def test_AC3(X,fact,Mu):
 		for var in sub:
 			newx[var] = X[var]
 		if(test_AC1(newx,fact,Mu) and (test_AC2(newx,fact,Mu))):
-			return False
-	return True
-
-def test_AC3v2(X,fact,Mu):
-	"""
-	dict * dict * class Situation
-	return True iff AC3 is respected, False otherwise
-	"""
-	subsets_x = subsets_size(list(X.keys()),len(X)) #Tous les sous-ensembles possibles de X
-	for sub in subsets_x:
-		newx = dict()
-		for var in sub:
-			newx[var] = X[var]
-		if(test_AC1(newx,fact,Mu) and (test_AC2v2(newx,fact,Mu))):
 			return False
 	return True
 
@@ -348,11 +305,27 @@ def is_subset(X,phi):
 			return False
 	return True
 
+def diff_cond(D1,D2):
+    """
+    dict * dict -> dict
+    Input : dictionnaries of variables and their values
+    Hypothesis : same variables in D1 and D2
+    Output : dictionnary containing the difference condition between D1 and D2 (key = variable, value = tuple of values in D1 and D2)
+    """
+    res = dict()
+    for k,v in D1.items():
+        v2 = D2[k]
+        if v2 != v:
+            res[k] = (v,v2)
+    return res
+
 def test_partial_cause(x,phi,Mu):
 	"""
 	return True iff x is a partial cause of phi in Mu=(M,u)
 	"""
 	return test_actual_cause(x,phi,Mu) #and is_subset(x,phi)
+
+# TESTING COUNTERFACTUAL CAUSE
 
 def test_CC1(X,fact,Mu):
     """
@@ -389,20 +362,6 @@ def test_CC3(y,foil,Mu):
 	return False
 
 
-def diff_cond(D1,D2):
-    """
-    dict * dict -> dict
-    Input : dictionnaries of variables and their values
-    Hypothesis : same variables in D1 and D2
-    Output : dictionnary containing the difference condition between D1 and D2 (key = variable, value = tuple of values in D1 and D2)
-    """
-    res = dict()
-    for k,v in D1.items():
-        v2 = D2[k]
-        if v2 != v:
-            res[k] = (v,v2)
-    return res
-
 def test_CC4(x,y):
 	"""
 	dict * dict -> bool
@@ -437,58 +396,10 @@ def test_counterfactual_cause(x, y, fact, foil, Mu):
     a = a and test_CC5(x,fact,foil)
     return a
 
-def sub(dic1,dic2):
-    """
-    return True if forall k in dic1.keys(), k in dic2.keys()
-	i.e. dic1.keys() \in dic2.keys()
-    """
-    for k in dic1.keys():
-        if k not in dic2.keys():
-            return False
-    return True
 
-def fullsub(dic1,dic2):
-	"""
-	return True if forall k,v in dic1.items, k,v in dic2.items()
-	i.e. dic1 \in dic2
-	"""
-	for k,v in dic1.items():
-		if k not in dic2:
-			return False
-		elif v!= dic2[k]:
-			return False
-	return True
+# CAUSE GENERATION
 
-def actual_cause_generator(fact,Mu,verbose = False):
-	"""
-	dict * situation -> dict
-	retourne une cause actuelle de fact dans la situation (M,u)
-	"""
-	Mutmp = copy.deepcopy(Mu)
-	Mutmp.set_val_v()
-
-	lres = []
-
-	xu = Mutmp.u
-	xu = dict() #temporaire : a voir si on test sur les variables exo, voir combi_test_xprime(test_AC2)
-	xv = Mutmp.v
-	to_test = list(sorted(subsets(dico2list(xu)+dico2list(xv)),key = len))[1:] 	#enumere toutes les combinaisons de variables a tester
-																				#on les tris par taille pour vérifier AC3 par construction
-	for lx in to_test:
-		if verbose:
-			print(lx)
-		if  test_AC1(dict(lx),fact,Mutmp) and test_AC2(dict(lx),fact,Mutmp): #AC3 vraie par construction
-			condAC3 = True
-			for d in lres:
-				if sub(d,dict(lx)): #Test AC3
-					condAC3 = False
-					break
-			if condAC3:
-				lres.append(dict(lx))
-	return lres
-
-
-def actual_cause_generator_v2(fact,Mu,verbose = False): #same fuction, only difference : test_AC2 -> test_AC2v2
+def actual_cause_generator(fact,Mu,verbose = False): #same fuction, only difference : test_AC2 -> test_AC2v2
 	"""
 	dict * situation -> dict
 	retourne la liste des causes effective de fact dans la situation (M,u)
@@ -509,14 +420,14 @@ def actual_cause_generator_v2(fact,Mu,verbose = False): #same fuction, only diff
 		x = dict(lx)
 		if verbose:
 			print(lx)
-		condAC3 = True
-		for d in lres:
-			if sub(d,x): #Test AC3
-				condAC3 = False
-				break
-		if condAC3:
-			if  test_AC1(x,fact,Mutmp) and test_AC2v2(x,fact,Mutmp): #AC3 vraie par construction
-				if not sub(fact,x): #on ne veut pas que le fact se retrouve comme cause de lui meme.
+		if not sub(fact,x): #on ne veut pas que le fact se retrouve comme cause de lui meme.
+			condAC3 = True
+			for d in lres:
+				if sub(d,x): #Test AC3
+					condAC3 = False
+					break
+			if condAC3:
+				if  test_AC1(x,fact,Mutmp) and test_AC2(x,fact,Mutmp): #AC3 vraie par construction
 					lres.append(x)
 	return lres
 
@@ -526,15 +437,13 @@ def counterfactual_cause_generator(fact,foil,Mu,verbose = False):
 	dict * dict * situation -> dict
 	retourne la liste des causes contrefactuelle de (fact,foil) dans la situation Mu
 	"""
-	Mutmp = copy.deepcopy(Mu)
 	#CC1
-	ac = actual_cause_generator_v2(fact,Mutmp)
-	lx = []
+	ac = actual_cause_generator(fact,Mu)
+	lx = [] #liste des causes partielles
 	for c in ac:
-		[lx.append(i) for i in subsets(dico2list(c))[1:] if i not in lx]
-	lx = sorted(lx,key = len,reverse = True)
-	for i in range(len(lx)):
-		lx[i] = dict(lx[i]) 
+		[lx.append(dict(i)) for i in subsets(dico2list(c))[1:] if i not in lx]
+	lx = sorted(lx,key = len,reverse = True) #on ordonne par nombre de variable dans la cause (ordre decroissant)
+
     
     #CC2
 	if not check_not(foil,Mu):
@@ -544,43 +453,50 @@ def counterfactual_cause_generator(fact,foil,Mu,verbose = False):
 		raise Exception('fact is False under Mu')
         
     #CC4
-	l_X = [] #liste des valeurs possible pour X
-	[l_X.append(dict()) for i in range(len(lx))]
-	for i in range(len(l_X)):
-		for key in lx[i]:
-			l_X[i][key] = Mu.M.V[key]
+	#l_X = [] #liste des valeurs possible pour X
+	#[l_X.append(dict()) for i in range(len(lx))]
+	#for i in range(len(lx)):
+	#	l_X.append(dict())
+	#	for key in lx[i]:
+	#		l_X[i][key] = Mu.M.V[key]
 
 
-	combi_test_y = [] #combinaison de valeurs a tester pour X = y
-	[combi_test_y.append(search([l for l in l_X[i].values()])) for i in range(len(l_X))]
+	#combi_test_y = [] #combinaison de valeurs a tester pour X = y
+	#[combi_test_y.append(search([l for l in l_X[i].values()])) for i in range(len(l_X))]
 
 	ly = [] #liste des listes des X = y en sachant X = x   
-	for i in range(len(l_X)):
+			#liste pour les variables X des listes des valeurs y possibles i.e. ly[i] correspond a var_X[i] et contient la liste des assignations de valeurs possibles
+	for i in range(len(lx)):
 		ly.append([])
-		var_X = list(l_X[i].keys())
-		for combi_y in combi_test_y[i]:
+		#var_X = list(l_X[i].keys())
+		var_X = list(lx[i].keys())
+		#combi_test_y = search([l for l in l_X[i].values()])
+		combi_test_y = search([l for l in [Mu.M.V[key] for key in lx[i]]])
+		for combi_y in combi_test_y:
 			ly[i].append(dict())
 			for j in range(len(var_X)):
 				ly[i][-1][var_X[j]] = combi_y[j]
-        
-	for i in range(len(ly)):
 		if lx[i] in ly[i] : ly[i].remove(lx[i]) #CC4
+
+	#for i in range(len(ly)):
+	#	if lx[i] in ly[i] : ly[i].remove(lx[i]) #CC4
+
 	if verbose:
 		for i in range(len(ly)):
 			print(ly[i])
 			print(lx[i])
     #CC3
 	lres = []
-	for iteration in range(len(ly)): #une itération = une cause partielle de X
+	for iteration in range(len(ly)): #une itération = une cause partielle X = x
 		for y in ly[iteration]:
-			condCC5 = True
+			condCC5 = True #on obtient CC5 par construction
 			for d in lres:
-				if fullsub(y,d[1]): #if y \in d[1] for some d in lres then CC5 is false
+				if fullsub(y,d[1]): #if y \in d[1] for some d in lres then CC5 is false     d[1] because it's where X=y is stored
 					condCC5 = False #may want to choose better the subsomption fucntion depending on what we want
 					break
 			if condCC5:
 				allW = diff(Mu.M.V,y)
-				allW = diff(allW,foil)
+				allW = diff(allW,foil) #we remove any variable from the foil in our Ws
 				for subW in subsets(dico2list(allW)):
 					stop = False
 					if len(subW)>0: #non Empty
@@ -601,19 +517,17 @@ def counterfactual_cause_generator(fact,foil,Mu,verbose = False):
 								
 							newMu = Situation(Mu.M,Mu.u,newv)
 							#test partial cause (y is a partial cause of foil under this Situation)
-							lac = actual_cause_generator_v2(foil,newMu)
+							lac = actual_cause_generator(foil,newMu)
 							for c in lac: #we must test for each of these cause if X=y \in c
 								if verbose:
 									print("-"*70)
-									tmp = copy.deepcopy(newMu)
-									print(value('output',tmp))
 									print(newv)
 									print(c)
 									print(y)
 									print("-"*70)
 								if sub(y,c): #X=y is a partial cause of foil									
 									lres.append((lx[iteration],y)) #if all CC1-5 holds for (X = x,X = y) then its a CC.
-									stop = True
+									stop = True #we already found that (X=x,X=y) is a cc for (fact,foil) so we can stop testing for that value y
 									break
 							if stop:
 								break
