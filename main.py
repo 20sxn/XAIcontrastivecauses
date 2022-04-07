@@ -370,18 +370,22 @@ def test_CC4(x,y):
 	return (len(diff_cond(x,y))>0)
 
 
-def test_CC5(X,fact,foil):
+def test_CC5(x,y,fact,foil,Mu):
     """
-    dict**3 -> bool
+    dict**5 -> bool
     Return True if CC5 is respected, False otherwise
     """
-    diff1 = set(fact.items()).difference(set(foil.items()))
-    diff2 = set(foil.items()).difference(set(fact.items()))
-    diff = list(diff1.union(diff2))
-
-    if (len(set(X) & set(diff))==len(X)):
-        return True
-    return False
+    v_x = diff(Mu.u,x)
+    u_x = diff(Mu.v,x)
+    l_all = v_x.copy()
+    l_all.update(u_x)
+    for subl in subsets(dico2list(l_all)):
+        new_x = x.copy()
+        new_x.update(subl)
+        if(test_CC1(new_x,fact,Mu) and test_CC2(foil,Mu) and test_CC3(y,foil,Mu) and test_CC4(x,y)):
+            return False
+    return True
+        
 
 def test_counterfactual_cause(x, y, fact, foil, Mu):
     """
@@ -534,3 +538,4 @@ def counterfactual_cause_generator(fact,foil,Mu,verbose = False):
 					if stop:
 						break
 	return lres
+
