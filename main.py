@@ -69,7 +69,7 @@ class Situation:
 			elif k in list(self.v.keys()):
 				res[k] = self.v[k]
 		return res
-	
+
 	def set_val_v(self):
 		"""
 		Calcule les valeurs de v non définies
@@ -77,7 +77,7 @@ class Situation:
 		for k,v in self.v.items():
 			if v == None:
 				self.v[k] = value(k,self,set_val=True)
-	
+
 	def reset_val_v(self):
 		"""
 		Mets toutes les valeurs de v à None
@@ -319,20 +319,32 @@ def diff_cond(D1,D2):
             res[k] = (v,v2)
     return res
 
-def test_partial_cause(x,phi,Mu):
+def test_partial_cause(x,phi,Sit):
 	"""
 	return True iff x is a partial cause of phi in Mu=(M,u)
 	"""
-	return test_actual_cause(x,phi,Mu) #and is_subset(x,phi)
+	if test_actual_cause(x,phi,Sit): # if already an actual cause
+		return True # it is a partial cause
+	else:
+		S = [v for v in Sit.v if v not in X.keys() and v not in phi.keys()] # endogenous variables that are not in X
+		subsets_S = subsets(S) # subsets of S
+		subsets_S.sort(key = len) # sunsets of S ordered by length (smallest first)
+		for l in subsets_S:
+			newX = X.copy()
+			l_dict = {v : value(v,Sit) for v in l}
+			newX.update(l_dict) # bigger cause
+			if test_actual_cause(newX,phi,Sit):
+				return True
+		return False
 
 # TESTING COUNTERFACTUAL CAUSE
 
-def test_CC1(X,fact,Mu):
+def test_CC1(X,fact,Sit):
     """
     dict * dict * situation -> bool
     Return True if CC1 is respected, False otherwise
     """
-    return test_partial_cause(X,fact,Mu)
+    return test_partial_cause(X,fact,Sit)
 
 
 def test_CC2(foil,Mu):
@@ -343,21 +355,34 @@ def test_CC2(foil,Mu):
 	return check_not(foil,Mu)
 
 
-def test_CC3(y,foil,Mu):
-	W = diff(Mu.S.V,y) #parties des valeurs possibles pour W
-	#W = subsets((Mu.S.V-y))
-	for sublW in subsets(dico2list(W)):
-		if len(sublW)>0:
-			subW = dict(sublW)
-			newMu = copy.deepcopy(Mu) #Mu avec valeurs de subW
-			for w in subW:
-				if w in newMu.U:
-					newMu.U[w] = subW[w]
-				elif w in newMu.v:
-					newMu.v[w] = subW[w]
-				else:
-					raise Exception("Custom : Mu not properly defined")
-			if test_partial_cause(y,foil,newMu):
+def test_CC3(y,foil,Sit):
+	W = [v for v in Sit.v if v not in y.keys() and v not in foil.keys()] # endogenous variables different from those in y and foil
+
+	posval = dict() # all possible values for each variable in W
+	for v in W:
+		posval[v] = Sit.M.V[v]
+
+	W = subsets(list(W)) # we consider all subsets of W
+	W.sort(key=len) # subsets are sorted by ascending length
+	W.remove([]) # we don't consider the empty list
+	for sublW in W:
+		#print('sublW :',sublW)
+		# we consider all possible settings of variables in W
+		w_posval = search([posval[v] for v in sublW]) # cartesian product of possible values
+		#print('w_posval :',w_posval)
+		for settings in w_posval:
+			w = dict()
+			for i in range(len(sublW)):
+				w[sublW[i]] = settings[i] # same order by construction of search (it's not clean code i know but idk how to do it otherwise)
+			#print('w :',w)
+
+			newSit = copy.deepcopy(Sit) #Mu avec valeurs de subW
+			newSit.v.update(w)
+			newSit.v.update(y)
+			newSit.v.update(foil)
+			#print('Sit :',Sit.v)
+			#print('newSit :',newSit.v)
+			if test_CC1(y,foil,newSit):
 				return True
 	return False
 
@@ -385,7 +410,7 @@ def test_CC5(x,y,fact,foil,Mu):
         if(test_CC1(new_x,fact,Mu) and test_CC2(foil,Mu) and test_CC3(y,foil,Mu) and test_CC4(x,y)):
             return False
     return True
-        
+
 
 def test_counterfactual_cause(x, y, fact, foil, Mu):
     """
@@ -448,14 +473,14 @@ def counterfactual_cause_generator(fact,foil,Mu,verbose = False):
 		[lx.append(dict(i)) for i in subsets(dico2list(c))[1:] if i not in lx]
 	lx = sorted(lx,key = len,reverse = True) #on ordonne par nombre de variable dans la cause (ordre decroissant)
 
-    
+
     #CC2
 	if not check_not(foil,Mu):
 		raise Exception('foil is True under Mu')
-    
+
 	if not check(fact,Mu): #not in CC2 but better to test it early on.
 		raise Exception('fact is False under Mu')
-        
+
     #CC4
 	#l_X = [] #liste des valeurs possible pour X
 	#[l_X.append(dict()) for i in range(len(lx))]
@@ -468,7 +493,7 @@ def counterfactual_cause_generator(fact,foil,Mu,verbose = False):
 	#combi_test_y = [] #combinaison de valeurs a tester pour X = y
 	#[combi_test_y.append(search([l for l in l_X[i].values()])) for i in range(len(l_X))]
 
-	ly = [] #liste des listes des X = y en sachant X = x   
+	ly = [] #liste des listes des X = y en sachant X = x
 			#liste pour les variables X des listes des valeurs y possibles i.e. ly[i] correspond a var_X[i] et contient la liste des assignations de valeurs possibles
 	for i in range(len(lx)):
 		ly.append([])
@@ -518,7 +543,7 @@ def counterfactual_cause_generator(fact,foil,Mu,verbose = False):
 							newv = w.copy()
 							for k,v in y.items():
 								newv[k] = v
-								
+
 							newMu = Situation(Mu.M,Mu.u,newv)
 							#test partial cause (y is a partial cause of foil under this Situation)
 							lac = actual_cause_generator(foil,newMu)
@@ -529,7 +554,7 @@ def counterfactual_cause_generator(fact,foil,Mu,verbose = False):
 									print(c)
 									print(y)
 									print("-"*70)
-								if sub(y,c): #X=y is a partial cause of foil									
+								if sub(y,c): #X=y is a partial cause of foil
 									lres.append((lx[iteration],y)) #if all CC1-5 holds for (X = x,X = y) then its a CC.
 									stop = True #we already found that (X=x,X=y) is a cc for (fact,foil) so we can stop testing for that value y
 									break
@@ -538,4 +563,3 @@ def counterfactual_cause_generator(fact,foil,Mu,verbose = False):
 					if stop:
 						break
 	return lres
-
