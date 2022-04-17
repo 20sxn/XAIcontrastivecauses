@@ -106,7 +106,7 @@ def value(X,Mu,set_val = False):
 
 	for k,v in parents.items():
 		if v == None: # on ne connait pas la valeur
-			parents[k] = value(k,Mu)
+			parents[k] = value(k,Mu,set_val)
 	if set_val:
 		Mu.v[X] = Mu.M.G.P[X][1](parents)
 	return Mu.M.G.P[X][1](parents)
@@ -157,10 +157,11 @@ def dico2list(d):
 	"""
 	transforme un dictionnaire en liste (opération inverse : dict(l))
 	"""
-	l = []
-	for k,v in d.items():
-		l.append((k,v))
-	return l
+	# l = []
+	# for k,v in d.items():
+	# 	l.append((k,v))
+	# return l
+	return list(d.items())
 
 def search(args):
 	"""
@@ -326,11 +327,11 @@ def test_partial_cause(x,phi,Sit):
 	if test_actual_cause(x,phi,Sit): # if already an actual cause
 		return True # it is a partial cause
 	else:
-		S = [v for v in Sit.v if v not in X.keys() and v not in phi.keys()] # endogenous variables that are not in X
+		S = [v for v in Sit.v if v not in x.keys() and v not in phi.keys()] # endogenous variables that are not in X
 		subsets_S = subsets(S) # subsets of S
 		subsets_S.sort(key = len) # sunsets of S ordered by length (smallest first)
 		for l in subsets_S:
-			newX = X.copy()
+			newX = x.copy()
 			l_dict = {v : value(v,Sit) for v in l}
 			newX.update(l_dict) # bigger cause
 			if test_actual_cause(newX,phi,Sit):
@@ -433,7 +434,7 @@ def actual_cause_generator(fact,Mu,verbose = False): #same fuction, only differe
 	dict * situation -> dict
 	retourne la liste des causes effective de fact dans la situation (M,u)
 	"""
-	if not check(fact,Mu): #si fact n'est pas vérififié dans la situation (M,u)
+	if not check(fact,Mu): #si fact n'est pas vérifié dans la situation (M,u)
 		return []
 	Mutmp = copy.deepcopy(Mu)
 	Mutmp.set_val_v()
@@ -441,10 +442,10 @@ def actual_cause_generator(fact,Mu,verbose = False): #same fuction, only differe
 	lres = []
 
 	#xu = Mutmp.u
-	xu = dict() #temporaire : a voir si on test sur les variables exo, voir combi_test_xprime(test_AC2)
+	xu = dict() #temporaire : a voir si on teste sur les variables exo, voir combi_test_xprime (test_AC2)
 	xv = Mutmp.v
 	to_test = list(sorted(subsets(dico2list(xu)+dico2list(xv)),key = len))[1:] 	#enumere toutes les combinaisons de variables a tester
-																				#on les tris par taille pour vérifier AC3 par construction
+																				#on les trie par taille pour vérifier AC3 par construction
 	for lx in to_test:
 		x = dict(lx)
 		if verbose:
