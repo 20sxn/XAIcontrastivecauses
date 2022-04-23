@@ -245,35 +245,34 @@ def test_AC2(X,fact,Mu,verbose=False):
 		cpt = 0
 
 	for sublW in subsets(dico2list(W)):
-		if len(sublW)>0:
-			w = dict(sublW) #peut etre verifier si w non vide à demander
+		w = dict(sublW) #peut etre verifier si w non vide à demander
+
+		if verbose:
+			print("Boucle " + str(cpt) + " w")
+			print(w)
+			cpt += 1
+
+
+		for combi_xprime in combi_test_xprime:
+			#xprime = dict() # dictionnaire representant X = x'
+			#for i in range(len(var_test_xprime)):
+			#	xprime[var_test_xprime[i]] = combi_xprime[i]
+
+			#newv = w.copy() # contient les variables de w et de x'
+			#for var,val in xprime.items():
+			#	newv[var] = val
+			newv = w.copy()
+			for i in range(len(var_test_xprime)):
+				newv[var_test_xprime[i]] = combi_xprime[i]
 
 			if verbose:
-				print("Boucle " + str(cpt) + " w")
-				print(w)
-				cpt += 1
+				print("\tBoucle x'")
+				#print("\t",xprime)
+				print("\t",newv)
 
-
-			for combi_xprime in combi_test_xprime:
-				#xprime = dict() # dictionnaire representant X = x'
-				#for i in range(len(var_test_xprime)):
-				#	xprime[var_test_xprime[i]] = combi_xprime[i]
-
-				#newv = w.copy() # contient les variables de w et de x'
-				#for var,val in xprime.items():
-				#	newv[var] = val
-				newv = w.copy()
-				for i in range(len(var_test_xprime)):
-					newv[var_test_xprime[i]] = combi_xprime[i]
-
-				if verbose:
-					print("\tBoucle x'")
-					#print("\t",xprime)
-					print("\t",newv)
-
-				newMu = Situation(Mutmp.M,Mutmp.u,newv)
-				if check_not(fact,newMu):
-					return True
+			newMu = Situation(Mutmp.M,Mutmp.u,newv)
+			if check_not(fact,newMu):
+				return True
 	return False
 
 def test_AC3(X,fact,Mu):
@@ -449,7 +448,9 @@ def actual_cause_generator(fact,Mu,verbose = False): #same fuction, only differe
 	for lx in to_test:
 		x = dict(lx)
 		if verbose:
+			print("-"*20)
 			print(lx)
+			print(lres)
 		if not sub(fact,x): #on ne veut pas que le fact se retrouve comme cause de lui meme.
 			condAC3 = True
 			for d in lres:
@@ -457,6 +458,8 @@ def actual_cause_generator(fact,Mu,verbose = False): #same fuction, only differe
 					condAC3 = False
 					break
 			if condAC3:
+				if verbose:
+					print(x,test_AC1(x,fact,Mutmp),test_AC2(x,fact,Mutmp))
 				if  test_AC1(x,fact,Mutmp) and test_AC2(x,fact,Mutmp): #AC3 vraie par construction
 					lres.append(x)
 	return lres
